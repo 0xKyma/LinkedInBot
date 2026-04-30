@@ -199,15 +199,16 @@ publication-sourced item with "SOURCE TYPE: Publication" in your candidate listi
 DRAFT_SYSTEM_PROMPT = f"""
 You are a ghostwriter for Photi Manolakis, a senior Systems Engineer and MBSE
 practitioner. You have been given a scored shortlist of recent content. Your job
-is to draft three distinct, high-quality LinkedIn posts in her voice.
+is to draft three distinct, high-quality LinkedIn posts for EACH item in the
+shortlist, in her voice.
 
 {AUDIENCE}
 
 {VOICE_EXAMPLES}
 
 DRAFTING RULES:
-- Each post must be based on something specific from the shortlist — no generic takes
-- Three posts should offer meaningfully different angles, not the same take reworded:
+- Draft all three angles for every item in the shortlist — do not pick favourites
+- For each item, the three angles must be meaningfully different, not the same take reworded:
     Option 1: Practitioner angle — what does this mean for someone doing MBSE today?
     Option 2: Industry/trend angle — what does this signal about where SE is heading?
     Option 3: Contrarian or uncomfortable angle — what's the thing nobody wants to say about this?
@@ -215,7 +216,9 @@ DRAFTING RULES:
 - Include the source link naturally in the post or as a "Source:" line at the end
 - 2–3 hashtags, placed at the very end
 
-OUTPUT FORMAT:
+OUTPUT FORMAT (repeat this block for every item):
+## [Item title or short topic label]
+
 ### Option 1 — [angle label]
 [post text]
 
@@ -436,29 +439,34 @@ def write_post_file(
     drafts: str,
     world_evaluation: str = "",
     world_drafts: str = "",
-) -> Path:
-    path = POSTS_DIR / f"{date.isoformat()}.md"
+) -> tuple[Path, Path]:
+    date_str = date.isoformat()
+    posts_path = POSTS_DIR / f"{date_str}.md"
+    research_path = POSTS_DIR / f"{date_str}-research.md"
 
-    mbse_section = (
-        f"# LinkedIn Drafts — {date.isoformat()}\n\n"
-        f"## Track 1: MBSE / SysML / Systems Engineering\n\n"
-        f"### Research & Scoring\n\n{evaluation}\n\n"
-        f"---\n\n"
-        f"### Drafts\n\n{drafts}\n"
-    )
+    # --- Drafts file (what you'd actually post) ---
+    posts_content = f"# LinkedIn Drafts — {date_str}\n\n"
 
-    world_section = ""
+    if drafts:
+        posts_content += f"## Track 1: MBSE / SysML / Systems Engineering\n\n{drafts}\n"
+    else:
+        posts_content += "## Track 1: MBSE / SysML / Systems Engineering\n\n_No qualifying candidates found today._\n"
+
+    if world_drafts:
+        posts_content += f"\n---\n\n## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n{world_drafts}\n"
+    elif world_evaluation:
+        posts_content += "\n---\n\n## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n_No qualifying event found today._\n"
+
+    # --- Research file (scoring, candidates, working notes) ---
+    research_content = f"# Research & Scoring — {date_str}\n\n"
+    research_content += f"## Track 1: MBSE / SysML / Systems Engineering\n\n{evaluation}\n"
+
     if world_evaluation:
-        world_section = (
-            f"\n---\n\n"
-            f"## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n"
-            f"### Research & Scoring\n\n{world_evaluation}\n"
-        )
-        if world_drafts:
-            world_section += f"\n---\n\n### Drafts\n\n{world_drafts}\n"
+        research_content += f"\n---\n\n## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n{world_evaluation}\n"
 
-    path.write_text(mbse_section + world_section, encoding="utf-8")
-    return path
+    posts_path.write_text(posts_content, encoding="utf-8")
+    research_path.write_text(research_content, encoding="utf-8")
+    return posts_path, research_path
 
 
 # ---------------------------------------------------------------------------
@@ -526,8 +534,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print("\nNo qualifying world event found today. Skipping world events drafts.")
 
-    path = write_post_file(today, evaluation, drafts, world_evaluation, world_drafts)
-    print(f"\nWrote {path}\n")
+    posts_path, research_path = write_post_file(today, evaluation, drafts, world_evaluation, world_drafts)
+    print(f"\nWrote drafts:   {posts_path}")
+    print(f"Wrote research: {research_path}\n")
     if drafts:
         print("--- MBSE DRAFTS ---\n", drafts)
     if world_drafts:
