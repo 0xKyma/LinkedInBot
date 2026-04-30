@@ -52,50 +52,59 @@ They are NOT:
 # These are stylistic templates, not content to copy verbatim.
 
 VOICE_EXAMPLES = """
-VOICE AND FORMAT RULES (derived from top-performing technical LinkedIn posts):
+VOICE AND FORMAT RULES:
+
+Style — write like an early-careers professional who knows their subject:
+- Direct and plain. Short sentences. No rhetorical flourishes.
+- Say what you mean without dressing it up.
+- Use plain connectors: "and", "but", "so", "because". Not rhetorical pivots.
+- Opinions are stated as opinions, not revealed as hidden truths.
+- Knowledgeable but not performatively clever.
 
 Structure:
-- Line 1 is everything. It must stand alone and create tension or curiosity.
-  It is the only line visible before "see more." Make it count.
+- Line 1 is everything. It must stand alone before "see more." Make it count.
 - Use white space aggressively. Two to four sentences per paragraph max.
-- No walls of text. No corporate speak. No passive voice.
+- No walls of text.
 - Lists only when each item genuinely earns its own line.
-- End with a single, specific question — not "What do you think?" but something
-  that forces the reader to take a position.
+- End with a single specific question, a declarative closing statement, or a
+  direct call to action. Pick whichever lands hardest. Never use all three.
 
-Opening hook patterns that perform well:
-  Contrarian:    "Everyone's adopting SysML v2. Almost no one is ready for what comes after."
-  Confession:    "Three years ago I would have told you SysML v2 was years away from mattering. I was wrong."
+Hard rules — these patterns will be rejected:
+- No em dashes (— or --)
+- No "it's not X, it's Y" or any variation ("this isn't about X, it's about Y",
+  "X isn't the problem, Y is", "not X — Y")
+- No "the uncomfortable truth", "let's be honest", "here's the thing",
+  "what nobody talks about", "the real question is"
+- No passive voice
+- No corporate speak: "game-changer", "revolutionary", "paradigm shift",
+  "fast-paced world", "I'm excited to share"
+- No more than three hashtags
+- No "Drop a comment below!"
+- Do not tag vendors unless the post is genuinely praising specific functionality
+- AU/UK English spelling (programme, organisation, modelling, behaviour)
+
+Opening hook patterns that work:
+  Contrarian:     "Everyone's adopting SysML v2. Almost no one is ready for what comes after."
+  Confession:     "Three years ago I would have told you SysML v2 was years away from mattering. I was wrong."
   Surprising gap: "We've had a published SysML v2 spec for months. The tooling still hasn't caught up."
-  Hard question: "If your MBSE model disappeared tomorrow, would your program actually slow down?"
+  Hard question:  "If your MBSE model disappeared tomorrow, would your program actually slow down?"
   Specific stat:  "Of the last eight MBSE programs I've reviewed, two had interfaces that matched their models."
 
-Tone markers:
-- Opinionated but grounded in practice ("in my experience", "on programs I've worked")
-- Skeptical of hype, respectful of effort
-- Calls out the gap between what vendors claim and what engineers experience
-- Occasionally dry. Never sarcastic about individuals.
-- Uses "we" for the engineering community, "I" for personal experience
+Tone:
+- Grounded in practice. Reference real program experience where it fits.
+- Skeptical of hype, respectful of effort.
+- Use "we" for the engineering community, "I" for personal experience.
+- Dry is fine. Sarcastic is not.
 
-What to avoid:
-- "I'm excited to share..."
-- "In today's fast-paced world..."
-- "Game-changer", "revolutionary", "paradigm shift"
-- More than three hashtags
-- Tagging vendors unless the post is genuinely praising specific functionality
-- Ending with "Drop a comment below!"
+Example post structure (100-175 words):
 
-Example post structure (100–175 words):
+[Hook: one punchy line that stands alone before "see more"]
 
-[Hook — 1 punchy line. Must stand alone before "see more."]
+[Context: the specific thing. A fact, finding, or gap. 2-3 sentences. No padding.]
 
-[Context — the specific thing: a fact, finding, or observed gap. 2–3 sentences max. No padding.]
+[Opinion: your take. 1-3 plain sentences.]
 
-[Own opinion — your take or the uncomfortable implication. 1–3 sentences.]
-
-[Ending — one of: a specific question that forces a position, a declarative statement
- that closes the argument, or a direct call to action. Pick whichever lands hardest.
- Never use all three.]
+[Ending: question, statement, or call to action. One only.]
 
 #MBSE #SysML #SystemsEngineering
 """
@@ -332,9 +341,9 @@ angle. Draft two LinkedIn post options in her voice.
 SPECIAL RULES FOR WORLD EVENTS POSTS:
 - The post MUST lead with the systems thinking insight, not the news headline.
   Wrong: "The F-35 program has experienced another delay..."
-  Right: "Every major defence program that fails on integration was approved on
-          requirements. The F-35's latest delay is a systems architecture problem
-          wearing a schedule label."
+  Right: "Most major defence programs that fail on integration were approved on
+          solid requirements. The F-35 delays come down to systems architecture,
+          not schedule management."
 - The post should make an SE or systems thinking point that is genuinely non-obvious.
   Anyone can report news. Photi's value is the frame.
 - Avoid any language that reads as political endorsement or partisan commentary.
