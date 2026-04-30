@@ -1,17 +1,74 @@
 # LinkedIn Drafting Agent
 
-A Python agent that uses Claude with web search to find recent content in MBSE,
-SysML, systems engineering, defence, and energy, then drafts LinkedIn posts in
-your voice each day.
+A multi-agent Python system that uses Claude with web search to find recent
+content in MBSE, SysML, systems engineering, defence, and energy, then drafts
+LinkedIn posts in your voice each day.
 
 Two output files are written to `posts/` each run:
 
 - `YYYY-MM-DD.md` — the draft posts, ready to review and pick from
-- `YYYY-MM-DD-research.md` — scoring tables, candidates considered, and filtered items
+- `YYYY-MM-DD-research.md` — scoring tables, candidates considered, quality review notes
+
+## Agent architecture
+
+Six specialist agents run each day, orchestrated by `main.py`:
+
+```
+┌─────────────────────┐     ┌──────────────────────────┐
+│  MBSEResearchAgent  │     │ WorldEventsResearchAgent  │
+│                     │     │                           │
+│  10 web searches    │     │  6 web searches           │
+│  Score & shortlist  │     │  Score & select 1 event   │
+│  (MBSE/SysML/SE)    │     │  (defence/energy/geo)     │
+└────────┬────────────┘     └────────────┬──────────────┘
+         │   run in parallel             │
+         ▼                               ▼
+┌─────────────────────┐     ┌──────────────────────────┐
+│  MBSEDraftingAgent  │     │ WorldEventsDraftingAgent  │
+│                     │     │                           │
+│  3 angles per item  │     │  2 angles per event       │
+│  (practitioner,     │     │  (SE methodology frame,   │
+│  industry/trend,    │     │  systems thinking frame)  │
+│  contrarian)        │     │                           │
+└────────┬────────────┘     └────────────┬──────────────┘
+         │   run in parallel             │
+         └──────────────┬────────────────┘
+                        ▼
+             ┌─────────────────────┐
+             │    QualityAgent     │
+             │                     │
+             │  Reviews all posts  │
+             │  against voice      │
+             │  checklist          │
+             └──────────┬──────────┘
+                        │
+            ┌───────────┴────────────┐
+            │ PASS                   │ FAIL (with specific notes)
+            ▼                        ▼
+       keep draft            MBSEDraftingAgent /
+                             WorldEventsDraftingAgent
+                             (revision mode, max 2 rounds)
+                                      │
+                                      ▼
+                               write_output()
+                          posts/YYYY-MM-DD.md
+                          posts/YYYY-MM-DD-research.md
+```
+
+| Agent | File | Role |
+|---|---|---|
+| `MBSEResearchAgent` | `agents/research.py` | Web search + scoring for MBSE/SysML content |
+| `WorldEventsResearchAgent` | `agents/research.py` | Web search + scoring for defence/energy/geopolitics |
+| `MBSEDraftingAgent` | `agents/drafting.py` | Drafts 3 post angles per MBSE item |
+| `WorldEventsDraftingAgent` | `agents/drafting.py` | Drafts 2 post angles for world event |
+| `QualityAgent` | `agents/quality.py` | Reviews all drafts against the voice checklist |
+| Revision loop | `main.py` | Sends failed posts back to drafting agents with notes |
+
+The two research agents run in parallel. The two drafting agents run in parallel
+after research completes. Total wall-clock time is roughly half that of sequential
+execution.
 
 ## How it works
-
-The agent runs two independent tracks per day:
 
 **Track 1: MBSE / SysML / Systems Engineering**
 - Runs 10 web searches across SysML v2, MBSE methodology, digital engineering,
@@ -25,13 +82,13 @@ The agent runs two independent tracks per day:
 
 **Track 2: World Events (Defence / Energy / Geopolitics)**
 - Runs 6 web searches across defence procurement, energy policy, and geopolitical events
-- Looks for a systems thinking or SE angle on the event (feedback loops, unintended
-  consequences, interface failures, requirements volatility, verification gaps, etc.)
+- Looks for a systems thinking or SE angle (feedback loops, unintended consequences,
+  interface failures, requirements volatility, verification gaps, etc.)
 - Selects the single best event (min 15/25) and drafts 2 posts: one using an SE
   methodology frame, one using a broader systems thinking frame
 - Uses a 14-day lookback window
 
-On a good day you get up to 11 draft posts total. On a quiet day one or both
+On a good day you get up to 17 draft posts. On a quiet day one or both
 tracks may find nothing and say so.
 
 ## Quick start
@@ -53,7 +110,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 ### Dry run (no API calls, no cost)
 
 ```bash
-python prompts.py --dry-run
+python main.py --dry-run
 ```
 
 Prints all search prompts for both tracks so you can see exactly what will be sent.
@@ -61,7 +118,7 @@ Prints all search prompts for both tracks so you can see exactly what will be se
 ### Real run
 
 ```bash
-python prompts.py
+python main.py
 ```
 
 Output appears in `posts/YYYY-MM-DD.md` and `posts/YYYY-MM-DD-research.md`.
@@ -69,7 +126,7 @@ Output appears in `posts/YYYY-MM-DD.md` and `posts/YYYY-MM-DD-research.md`.
 ### MBSE track only (saves ~2 API calls)
 
 ```bash
-python prompts.py --mbse-only
+python main.py --mbse-only
 ```
 
 ## Run it daily via GitHub Actions
@@ -93,13 +150,22 @@ drafts in `posts/YYYY-MM-DD.md`, pick one, refine, post.
 
 ```
 LinkedInBot/
-├── .github/workflows/daily.yml   # GitHub Actions schedule
-├── posts/                        # daily output lands here
-│   ├── YYYY-MM-DD.md             # draft posts
-│   └── YYYY-MM-DD-research.md    # research and scoring notes
-├── prompts.py                    # agent, prompts, and all logic
-├── sources.yaml                  # legacy feed list (not used by current agent)
-├── daily.yml                     # legacy feed config (not used by current agent)
+├── agents/
+│   ├── base.py               # BaseAgent wrapping AsyncAnthropic
+│   ├── research.py           # MBSEResearchAgent, WorldEventsResearchAgent
+│   ├── drafting.py           # MBSEDraftingAgent, WorldEventsDraftingAgent
+│   └── quality.py            # QualityAgent
+├── prompts/
+│   ├── shared.py             # AUDIENCE, VOICE_EXAMPLES
+│   ├── research.py           # search system prompts + user prompt templates
+│   ├── drafting.py           # draft system prompts + revision prompt
+│   └── quality.py            # quality checklist system prompt
+├── main.py                   # async orchestrator entry point
+├── output.py                 # writes posts/ files
+├── prompts.py                # legacy entry point (preserved for compatibility)
+├── posts/                    # daily output lands here
+│   ├── YYYY-MM-DD.md         # draft posts
+│   └── YYYY-MM-DD-research.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -109,7 +175,7 @@ LinkedInBot/
 
 ### Voice and style
 
-Edit the `VOICE_EXAMPLES` constant in `prompts.py`. Key rules currently in place:
+Edit `prompts/shared.py`. Key rules currently in place:
 
 - Posts are 100-175 words
 - Structure: hook, context, opinion, ending (question or statement)
@@ -120,18 +186,19 @@ Edit the `VOICE_EXAMPLES` constant in `prompts.py`. Key rules currently in place
 - AU/UK English (programme, organisation, modelling)
 - No corporate clichés, no more than 3 hashtags
 
-After a few weeks of real runs you will see what Claude gets right and wrong.
-Update the prompt accordingly. Treat it as a living document.
+The `QualityAgent` enforces these rules automatically and triggers a rewrite
+if a draft fails. After a few weeks of real runs you will see what it still
+gets wrong. Tighten the rules in `prompts/shared.py` and `prompts/quality.py`.
 
 ### Search topics
 
-Edit `SEARCH_USER_PROMPT_TEMPLATE` and `WORLD_EVENTS_USER_PROMPT_TEMPLATE` in
-`prompts.py` to change what is searched or add new query strings.
+Edit `prompts/research.py` — `SEARCH_USER_PROMPT_TEMPLATE` for MBSE queries,
+`WORLD_EVENTS_USER_PROMPT_TEMPLATE` for world events queries.
 
 ### Scoring and selection
 
-Edit `SEARCH_SYSTEM_PROMPT` and `WORLD_EVENTS_SEARCH_SYSTEM_PROMPT` to adjust
-the scoring rubric, minimum score thresholds, or inclusion/exclusion rules.
+Edit the system prompts in `prompts/research.py` to adjust scoring rubrics,
+minimum score thresholds, or inclusion/exclusion rules.
 
 ### Run frequency
 
@@ -143,12 +210,13 @@ Change the cron line in `.github/workflows/daily.yml`. Format is
 
 ### Model
 
-Change `MODEL` in `prompts.py`. Currently `claude-sonnet-4-6`.
+Change `MODEL` in `agents/base.py`. Currently `claude-sonnet-4-6`.
 
 ## Cost
 
 Roughly AU$9-10 per month at one full run per day (both tracks), based on
-Sonnet pricing and approximately 4 API calls per run.
+Sonnet pricing and approximately 6 API calls per run (4 core + up to 2 revision
+rounds if quality check fails).
 
 Use `--mbse-only` to run only Track 1 and keep costs closer to AU$4-5/month.
 
@@ -166,10 +234,16 @@ but still require novelty. Try `--dry-run` to confirm the queries look correct.
 
 **Track 2 always finds nothing**
 Defence and energy events need a genuine SE angle to qualify. The bar is
-intentionally high. Lower the minimum score threshold in
-`WORLD_EVENTS_SEARCH_SYSTEM_PROMPT` if you want more candidates surfaced.
+intentionally high. Lower the minimum score threshold in the world events
+system prompt in `prompts/research.py` if you want more candidates surfaced.
 
 **Posts sound too AI-generated**
-Add more of your own writing as examples to `VOICE_EXAMPLES`, or tighten the
-hard rules. The most effective lever is showing it what you actually wrote,
-not telling it what tone to hit.
+Add more of your own writing as examples to `VOICE_EXAMPLES` in `prompts/shared.py`,
+or add specific failing patterns to the checklist in `prompts/quality.py`. The
+most effective lever is showing it what you actually wrote, not telling it what
+tone to hit.
+
+**Quality check keeps failing after 2 revision rounds**
+The offending rule is likely in `prompts/quality.py`. Check the research file
+(`YYYY-MM-DD-research.md`) for the `## Quality Review` section to see exactly
+what was flagged, then either tighten the drafting prompt or relax the rule.
