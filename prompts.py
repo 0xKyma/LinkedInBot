@@ -85,17 +85,17 @@ What to avoid:
 - Tagging vendors unless the post is genuinely praising specific functionality
 - Ending with "Drop a comment below!"
 
-Example post structure (150–250 words):
+Example post structure (100–175 words):
 
-[Hook — 1 punchy line]
+[Hook — 1 punchy line. Must stand alone before "see more."]
 
-[2–3 sentences expanding the tension or stakes]
+[Context — the specific thing: a fact, finding, or observed gap. 2–3 sentences max. No padding.]
 
-[Concrete insight, observation, or what you actually found — this is the meat]
+[Own opinion — your take or the uncomfortable implication. 1–3 sentences.]
 
-[Your personal take or the uncomfortable implication]
-
-[One specific question that forces a position]
+[Ending — one of: a specific question that forces a position, a declarative statement
+ that closes the argument, or a direct call to action. Pick whichever lands hardest.
+ Never use all three.]
 
 #MBSE #SysML #SystemsEngineering
 """
@@ -212,7 +212,7 @@ DRAFTING RULES:
     Option 1: Practitioner angle — what does this mean for someone doing MBSE today?
     Option 2: Industry/trend angle — what does this signal about where SE is heading?
     Option 3: Contrarian or uncomfortable angle — what's the thing nobody wants to say about this?
-- 150–250 words each
+- 100–175 words each
 - Include the source link naturally in the post or as a "Source:" line at the end
 - 2–3 hashtags, placed at the very end
 
@@ -344,7 +344,7 @@ SPECIAL RULES FOR WORLD EVENTS POSTS:
   verification gap, etc.).
 - Option 2 must use a broader systems thinking frame (feedback loops, unintended
   consequences, emergence, complexity).
-- 150–250 words each.
+- 100–175 words each.
 - Include source link naturally or as "Source:" at the end.
 - 2–3 hashtags; at least one of #SystemsEngineering or #SystemsThinking.
 
