@@ -1,3 +1,11 @@
-anthropic>=0.39.0
-feedparser>=6.0.11
-PyYAML>=6.0.2
+feeds:
+  - name: Medium – MBSE
+    url: https://medium.com/feed/tag/mbse
+  - name: Medium – SysML
+    url: https://medium.com/feed/tag/sysml
+  - name: Medium – Systems Engineering
+    url: https://medium.com/feed/tag/systems-engineering
+  - name: PPI SyEN (Project Performance International)
+    url: https://www.ppi-int.com/feed/
+  - name: IEEE Spectrum
+    url: https://spectrum.ieee.org/rss/blog/tech-talk/fulltext

@@ -1,210 +1,243 @@
 """
 LinkedIn Post Drafting Agent
 
-Pulls fresh items from a curated set of MBSE / Systems Engineering / SysML RSS
-feeds, asks Claude to pick the most LinkedIn-worthy stories of the day, and
-drafts three post options in Photi's voice. Output is written to
-posts/YYYY-MM-DD.md and committed to the repo by GitHub Actions (or manually).
+Uses Claude with web search to find, evaluate, and rank recent SysML / MBSE /
+Systems Engineering content, then drafts three LinkedIn post options in
+Photi's voice. Output is written to posts/YYYY-MM-DD.md.
 
 Usage:
-    python linkedin_agent.py            # full run
-    python linkedin_agent.py --dry-run  # skip Claude call, just show feed harvest
+    python prompts.py            # full run
+    python prompts.py --dry-run  # print prompt without calling Claude
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime as dt
-import hashlib
-import json
-import os
 import sys
-import time
-from dataclasses import dataclass, asdict
 from pathlib import Path
 
-import feedparser
-import yaml
 from anthropic import Anthropic
 
 # ---------------------------------------------------------------------------
-# Paths
+# Paths & config
 # ---------------------------------------------------------------------------
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SOURCES_FILE = REPO_ROOT / "sources.yaml"
-PROMPTS_FILE = REPO_ROOT / "scripts" / "prompts.py"
+REPO_ROOT = Path(__file__).resolve().parent
 POSTS_DIR = REPO_ROOT / "posts"
-SEEN_FILE = REPO_ROOT / "scripts" / ".seen_items.json"
-
 POSTS_DIR.mkdir(exist_ok=True)
 
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
-
-MODEL = "claude-sonnet-4-5"  # adjust if you want to switch model
-MAX_FEED_ITEMS_PER_SOURCE = 5
-LOOKBACK_DAYS = 3  # how far back to consider items "fresh"
-TARGET_CANDIDATES = 12  # how many items to send to Claude for selection
-
+MODEL = "claude-sonnet-4-6"
 
 # ---------------------------------------------------------------------------
-# Data structures
+# Audience definition (used in both steps)
 # ---------------------------------------------------------------------------
 
-@dataclass
-class FeedItem:
-    source: str
-    title: str
-    link: str
-    summary: str
-    published: str  # ISO date string
+AUDIENCE = """
+Photi's LinkedIn audience (~60–70% of followers):
+- Mid-to-senior Systems Engineers and MBSE leads in aerospace, defense, automotive, and space
+- Architects and technical leads evaluating or already using SysML v1/v2 tooling
+- Program managers with enough technical depth to care about modeling methodology
+- A smaller slice of students and early-career engineers who follow for career signal
 
-    @property
-    def fingerprint(self) -> str:
-        return hashlib.sha1(self.link.encode("utf-8")).hexdigest()
+They are NOT:
+- Software engineers who stumbled in from a general tech feed
+- Executives who want high-level digital transformation talking points
+- Beginners who need "what is MBSE" explained
+"""
+
+# ---------------------------------------------------------------------------
+# Voice examples — patterns from top-performing technical LinkedIn posts
+# ---------------------------------------------------------------------------
+# These are stylistic templates, not content to copy verbatim.
+
+VOICE_EXAMPLES = """
+VOICE AND FORMAT RULES (derived from top-performing technical LinkedIn posts):
+
+Structure:
+- Line 1 is everything. It must stand alone and create tension or curiosity.
+  It is the only line visible before "see more." Make it count.
+- Use white space aggressively. Two to four sentences per paragraph max.
+- No walls of text. No corporate speak. No passive voice.
+- Lists only when each item genuinely earns its own line.
+- End with a single, specific question — not "What do you think?" but something
+  that forces the reader to take a position.
+
+Opening hook patterns that perform well:
+  Contrarian:    "Everyone's adopting SysML v2. Almost no one is ready for what comes after."
+  Confession:    "Three years ago I would have told you SysML v2 was years away from mattering. I was wrong."
+  Surprising gap: "We've had a published SysML v2 spec for months. The tooling still hasn't caught up."
+  Hard question: "If your MBSE model disappeared tomorrow, would your program actually slow down?"
+  Specific stat:  "Of the last eight MBSE programs I've reviewed, two had interfaces that matched their models."
+
+Tone markers:
+- Opinionated but grounded in practice ("in my experience", "on programs I've worked")
+- Skeptical of hype, respectful of effort
+- Calls out the gap between what vendors claim and what engineers experience
+- Occasionally dry. Never sarcastic about individuals.
+- Uses "we" for the engineering community, "I" for personal experience
+
+What to avoid:
+- "I'm excited to share..."
+- "In today's fast-paced world..."
+- "Game-changer", "revolutionary", "paradigm shift"
+- More than three hashtags
+- Tagging vendors unless the post is genuinely praising specific functionality
+- Ending with "Drop a comment below!"
+
+Example post structure (150–250 words):
+
+[Hook — 1 punchy line]
+
+[2–3 sentences expanding the tension or stakes]
+
+[Concrete insight, observation, or what you actually found — this is the meat]
+
+[Your personal take or the uncomfortable implication]
+
+[One specific question that forces a position]
+
+#MBSE #SysML #SystemsEngineering
+"""
+
+# ---------------------------------------------------------------------------
+# Step 1: Search and evaluate
+# ---------------------------------------------------------------------------
+
+SEARCH_SYSTEM_PROMPT = f"""
+You are a research assistant for Photi Manolakis, a senior Systems Engineer and
+MBSE practitioner. Your job is to find and critically evaluate recent content
+about SysML, MBSE, and Systems Engineering so she can write informed LinkedIn posts.
+
+{AUDIENCE}
+
+TOPIC PRIORITY (high to low):
+1. SysML v2 — spec updates, OMG balloting, tooling support, adoption reports, migration guides
+2. SysML v1 — community usage trends, v1-to-v2 migration discussions, deprecation signals
+3. MBSE methodology — new frameworks, ROI studies, failure post-mortems, process debates
+4. Digital engineering standards — DoD DE Strategy updates, UPDM, UAF, OpenMBEE, Capella
+5. Systems Engineering research — peer-reviewed papers with practical implications
+6. Adjacent signals — formal methods, model-based testing, digital twin integration with SE
+
+EXCLUDE — do not surface these:
+- Vendor press releases with no technical substance ("Company X announces partnership")
+- "Introduction to MBSE / SysML" evergreen explainers with no new angle
+- Paywalled content with no accessible summary or preprint
+- Blog posts older than 10 days
+- Anything primarily about software engineering or DevOps that only mentions SE in passing
+
+EVALUATION CRITERIA — score each candidate 1–5 on:
+  Relevance:    How directly does it address SysML/MBSE practice?
+  Novelty:      Is this genuinely new information or a fresh angle on a live debate?
+  Practicality: Can a working systems engineer act on or argue with this?
+  Timeliness:   How recent is it? (Last 3 days = 5, 4–7 days = 3, older = 1)
+  Debate potential: Will this make Photi's audience agree, disagree, or share?
+
+After scoring, select the TOP 2–3 items (highest combined score) to write posts about.
+If you cannot find at least 2 strong candidates (combined score ≥ 15), say so explicitly
+rather than padding with weak content.
+
+OUTPUT FORMAT for this step:
+## Candidates Found
+For each item found (before filtering):
+  - Title, source, URL, date, brief summary (2 sentences max)
+
+## Scored Shortlist
+For each item you're keeping:
+  - Title + URL
+  - Scores: Relevance X | Novelty X | Practicality X | Timeliness X | Debate X | Total: X/25
+  - One sentence on why this is worth a post
+
+## Selected for Drafting
+List the 2–3 items you will draft posts from.
+"""
+
+SEARCH_USER_PROMPT_TEMPLATE = """Today is {today}.
+
+Search the web for content published in the last 10 days matching the topic
+priorities above. Cast a wide net first (8–12 candidates), then score and
+filter down to the 2–3 strongest items.
+
+Search queries to run (run all of them):
+- "SysML v2" after:{cutoff}
+- "SysML 2.0" OMG after:{cutoff}
+- MBSE "systems engineering" after:{cutoff}
+- "digital engineering" DoD OR aerospace OR defense after:{cutoff}
+- SysML tooling Capella OR Cameo OR "Eclipse Papyrus" after:{cutoff}
+- "model-based systems engineering" paper OR study OR report after:{cutoff}
+"""
+
+# ---------------------------------------------------------------------------
+# Step 2: Draft posts
+# ---------------------------------------------------------------------------
+
+DRAFT_SYSTEM_PROMPT = f"""
+You are a ghostwriter for Photi Manolakis, a senior Systems Engineer and MBSE
+practitioner. You have been given a scored shortlist of recent content. Your job
+is to draft three distinct, high-quality LinkedIn posts in her voice.
+
+{AUDIENCE}
+
+{VOICE_EXAMPLES}
+
+DRAFTING RULES:
+- Each post must be based on something specific from the shortlist — no generic takes
+- Three posts should offer meaningfully different angles, not the same take reworded:
+    Option 1: Practitioner angle — what does this mean for someone doing MBSE today?
+    Option 2: Industry/trend angle — what does this signal about where SE is heading?
+    Option 3: Contrarian or uncomfortable angle — what's the thing nobody wants to say about this?
+- 150–250 words each
+- Include the source link naturally in the post or as a "Source:" line at the end
+- 2–3 hashtags, placed at the very end
+
+OUTPUT FORMAT:
+### Option 1 — [angle label]
+[post text]
+
+### Option 2 — [angle label]
+[post text]
+
+### Option 3 — [angle label]
+[post text]
+"""
 
 
 # ---------------------------------------------------------------------------
-# Feed harvesting
+# Claude calls
 # ---------------------------------------------------------------------------
 
-def load_sources() -> list[dict]:
-    with SOURCES_FILE.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    return data.get("feeds", [])
-
-
-def load_seen() -> set[str]:
-    if not SEEN_FILE.exists():
-        return set()
-    try:
-        with SEEN_FILE.open("r", encoding="utf-8") as f:
-            return set(json.load(f))
-    except Exception:
-        return set()
-
-
-def save_seen(seen: set[str]) -> None:
-    # keep the file from growing forever
-    trimmed = list(seen)[-2000:]
-    with SEEN_FILE.open("w", encoding="utf-8") as f:
-        json.dump(trimmed, f)
-
-
-def parse_published(entry) -> dt.datetime:
-    for key in ("published_parsed", "updated_parsed", "created_parsed"):
-        val = entry.get(key)
-        if val:
-            try:
-                return dt.datetime(*val[:6], tzinfo=dt.timezone.utc)
-            except Exception:
-                continue
-    return dt.datetime.now(dt.timezone.utc)
-
-
-def harvest_feed(source: dict) -> list[FeedItem]:
-    name = source["name"]
-    url = source["url"]
-    items: list[FeedItem] = []
-
-    try:
-        parsed = feedparser.parse(url)
-    except Exception as e:
-        print(f"[WARN] {name}: parse error {e}", file=sys.stderr)
-        return items
-
-    if parsed.bozo and not parsed.entries:
-        print(f"[WARN] {name}: no entries (bozo={parsed.bozo_exception})",
-              file=sys.stderr)
-        return items
-
-    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=LOOKBACK_DAYS)
-
-    for entry in parsed.entries[:MAX_FEED_ITEMS_PER_SOURCE]:
-        published = parse_published(entry)
-        if published < cutoff:
-            continue
-
-        summary = (
-            entry.get("summary")
-            or entry.get("description")
-            or ""
-        )
-        # strip HTML crudely so we don't blow tokens on markup
-        summary = strip_html(summary)[:600]
-
-        items.append(FeedItem(
-            source=name,
-            title=entry.get("title", "Untitled").strip(),
-            link=entry.get("link", "").strip(),
-            summary=summary,
-            published=published.isoformat(),
-        ))
-
-    return items
-
-
-def strip_html(text: str) -> str:
-    import re
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-def harvest_all() -> list[FeedItem]:
-    all_items: list[FeedItem] = []
-    sources = load_sources()
-    print(f"Loading {len(sources)} sources...")
-
-    for src in sources:
-        items = harvest_feed(src)
-        print(f"  {src['name']}: {len(items)} fresh items")
-        all_items.extend(items)
-        time.sleep(0.5)  # be polite
-
-    return all_items
-
-
-# ---------------------------------------------------------------------------
-# Claude call
-# ---------------------------------------------------------------------------
-
-def build_user_prompt(items: list[FeedItem]) -> str:
-    lines = ["Today's harvested items (most recent first):", ""]
-    for i, it in enumerate(items, 1):
-        lines.append(f"[{i}] {it.title}")
-        lines.append(f"    Source: {it.source}")
-        lines.append(f"    Link: {it.link}")
-        lines.append(f"    Published: {it.published}")
-        if it.summary:
-            lines.append(f"    Summary: {it.summary}")
-        lines.append("")
-    lines.append("Now produce the three post options as instructed.")
-    return "\n".join(lines)
-
-
-def call_claude(items: list[FeedItem]) -> str:
-    # Late import so --dry-run works without the package configured
-    from prompts import SYSTEM_PROMPT
-
-    client = Anthropic()  # reads ANTHROPIC_API_KEY from env
+def run_search_and_evaluate(client: Anthropic, today: str, cutoff: str) -> str:
+    """Step 1: web search + scoring. Returns the evaluation text."""
+    user_prompt = SEARCH_USER_PROMPT_TEMPLATE.format(today=today, cutoff=cutoff)
 
     msg = client.messages.create(
         model=MODEL,
         max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        messages=[
-            {"role": "user", "content": build_user_prompt(items)},
-        ],
+        tools=[{"type": "web_search_20250305", "name": "web_search"}],
+        system=SEARCH_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
     )
 
-    # Concatenate text blocks
-    parts = []
-    for block in msg.content:
-        if getattr(block, "type", None) == "text":
-            parts.append(block.text)
+    parts = [block.text for block in msg.content if getattr(block, "type", None) == "text"]
+    return "\n".join(parts).strip()
+
+
+def run_draft(client: Anthropic, evaluation: str) -> str:
+    """Step 2: draft three posts from the evaluated shortlist."""
+    user_prompt = (
+        "Here is the scored shortlist of content to write about:\n\n"
+        + evaluation
+        + "\n\nNow draft the three LinkedIn post options as instructed."
+    )
+
+    msg = client.messages.create(
+        model=MODEL,
+        max_tokens=4096,
+        system=DRAFT_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+
+    parts = [block.text for block in msg.content if getattr(block, "type", None) == "text"]
     return "\n".join(parts).strip()
 
 
@@ -212,28 +245,15 @@ def call_claude(items: list[FeedItem]) -> str:
 # Output
 # ---------------------------------------------------------------------------
 
-def write_post_file(date: dt.date, items_used: list[FeedItem],
-                    claude_output: str) -> Path:
+def write_post_file(date: dt.date, evaluation: str, drafts: str) -> Path:
     path = POSTS_DIR / f"{date.isoformat()}.md"
-
-    lines = [
-        f"# LinkedIn Drafts — {date.isoformat()}",
-        "",
-        "## Sources considered",
-        "",
-    ]
-    for it in items_used:
-        lines.append(f"- **{it.title}** — {it.source}")
-        lines.append(f"  {it.link}")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## Drafts")
-    lines.append("")
-    lines.append(claude_output)
-    lines.append("")
-
-    path.write_text("\n".join(lines), encoding="utf-8")
+    content = (
+        f"# LinkedIn Drafts — {date.isoformat()}\n\n"
+        f"## Research & Scoring\n\n{evaluation}\n\n"
+        f"---\n\n"
+        f"## Drafts\n\n{drafts}\n"
+    )
+    path.write_text(content, encoding="utf-8")
     return path
 
 
@@ -244,50 +264,37 @@ def write_post_file(date: dt.date, items_used: list[FeedItem],
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true",
-                   help="Harvest feeds and print, but don't call Claude.")
+                   help="Print the search prompt without calling Claude.")
     args = p.parse_args(argv)
 
-    items = harvest_all()
-    if not items:
-        print("No fresh items today. Exiting.")
-        return 0
-
-    # dedupe against history, then sort newest first, take top N
-    seen = load_seen()
-    unseen = [i for i in items if i.fingerprint not in seen]
-    print(f"\n{len(unseen)} unseen items "
-          f"(after filtering {len(items) - len(unseen)} already covered)")
-
-    unseen.sort(key=lambda i: i.published, reverse=True)
-    candidates = unseen[:TARGET_CANDIDATES]
+    today = dt.date.today()
+    cutoff = (today - dt.timedelta(days=10)).isoformat()
 
     if args.dry_run:
-        print("\n--- DRY RUN: candidates that would go to Claude ---\n")
-        for c in candidates:
-            print(f"- {c.title} [{c.source}]")
-            print(f"  {c.link}")
+        print("=== STEP 1: Search & Evaluate ===\n")
+        print(SEARCH_USER_PROMPT_TEMPLATE.format(today=today.isoformat(), cutoff=cutoff))
+        print("\n=== STEP 2: Draft ===\n")
+        print("(drafts from shortlist — no web search in this step)")
         return 0
 
-    if not candidates:
-        print("No new candidates after dedupe. Exiting.")
+    client = Anthropic()
+
+    print("Step 1: Searching and evaluating candidates...")
+    evaluation = run_search_and_evaluate(client, today.isoformat(), cutoff)
+    print(evaluation)
+
+    if "cannot find" in evaluation.lower() or "no strong candidates" in evaluation.lower():
+        print("\nNot enough strong candidates found today. Exiting.")
         return 0
 
-    print(f"\nCalling Claude with {len(candidates)} candidates...")
-    output = call_claude(candidates)
+    print("\nStep 2: Drafting posts...")
+    drafts = run_draft(client, evaluation)
 
-    today = dt.date.today()
-    path = write_post_file(today, candidates, output)
-    print(f"\nWrote {path}")
-
-    # update seen
-    for c in candidates:
-        seen.add(c.fingerprint)
-    save_seen(seen)
-
+    path = write_post_file(today, evaluation, drafts)
+    print(f"\nWrote {path}\n")
+    print(drafts)
     return 0
 
 
 if __name__ == "__main__":
-    # ensure scripts/ is on path so we can `import prompts`
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
     sys.exit(main())
