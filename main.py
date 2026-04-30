@@ -25,8 +25,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import datetime as dt
+import os
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from anthropic import AsyncAnthropic
 
@@ -36,6 +38,8 @@ from agents.quality import QualityAgent, ReviewResult
 from output import write_post_file
 from prompts.research import SEARCH_USER_PROMPT_TEMPLATE, WORLD_EVENTS_USER_PROMPT_TEMPLATE
 
+TIMEZONE = os.environ.get("TIMEZONE", "Australia/Adelaide")
+
 _EMPTY_DRAFT = DraftResult(track="", raw_text="", has_drafts=False)
 _EMPTY_REVIEW = ReviewResult(raw_text="", has_failures=False)
 
@@ -43,7 +47,7 @@ MAX_REVISION_ROUNDS = 2
 
 
 async def run(mbse_only: bool = False) -> int:
-    today = dt.date.today()
+    today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
     cutoff = (today - dt.timedelta(days=10)).isoformat()
     cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
 
@@ -152,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="Skip the world events track (saves ~2 API calls).")
     args = p.parse_args(argv)
 
-    today = dt.date.today()
+    today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
     cutoff = (today - dt.timedelta(days=10)).isoformat()
     cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
 

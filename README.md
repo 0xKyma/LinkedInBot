@@ -212,6 +212,20 @@ Change the cron line in `.github/workflows/daily.yml`. Format is
 - `0 21 * * *` — every day at 21:00 UTC (07:30 Adelaide ACST)
 - `0 21 * * 1-5` — weekdays only
 
+### Timezone
+
+The bot determines today's date using your local timezone so the output file is
+named correctly. Set the `TIMEZONE` environment variable to your [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones):
+
+```bash
+export TIMEZONE="Australia/Adelaide"   # default
+export TIMEZONE="Australia/Sydney"
+export TIMEZONE="Europe/London"
+```
+
+Without this, the server's UTC clock is used, which may name the file one day
+behind if you run it after midnight local time.
+
 ### Model
 
 Change `MODEL` in `agents/base.py`. Currently `claude-sonnet-4-6`.
