@@ -6,9 +6,9 @@ LinkedIn posts in your voice each day.
 
 Three output files are written each run, each to its own folder:
 
-- `posts/YYYY-MM-DD.md` — the draft posts, ready to review and pick from
-- `research/YYYY-MM-DD.md` — scoring tables and candidates considered
-- `critique/YYYY-MM-DD.md` — final drafts alongside the quality review notes
+- `posts/YYYY-MM-DD-post.md` — the draft posts, ready to review and pick from
+- `research/YYYY-MM-DD-research.md` — scoring tables and candidates considered
+- `critique/YYYY-MM-DD-critique.md` — final drafts alongside the quality review notes
 
 ## Agent architecture
 
@@ -165,11 +165,11 @@ LinkedInBot/
 ├── output.py                 # writes output files
 ├── prompts.py                # legacy entry point (preserved for compatibility)
 ├── posts/                    # draft posts
-│   └── YYYY-MM-DD.md
+│   └── YYYY-MM-DD-post.md
 ├── research/                 # candidate scoring and evaluation
-│   └── YYYY-MM-DD.md
+│   └── YYYY-MM-DD-research.md
 ├── critique/                 # final drafts + quality review notes
-│   └── YYYY-MM-DD.md
+│   └── YYYY-MM-DD-critique.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -262,6 +262,6 @@ most effective lever is showing it what you actually wrote, not telling it what
 tone to hit.
 
 **Quality check keeps failing after 2 revision rounds**
-The offending rule is likely in `prompts/quality.py`. Check `critique/YYYY-MM-DD.md`
+The offending rule is likely in `prompts/quality.py`. Check `critique/YYYY-MM-DD-critique.md`
 for the `## Quality Review` section to see exactly
 what was flagged, then either tighten the drafting prompt or relax the rule.

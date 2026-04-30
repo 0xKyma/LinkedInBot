@@ -55,9 +55,9 @@ def write_post_file(
     else:
         critique_content += "\n---\n\n## Quality Review\n\n_No drafts to review._\n"
 
-    posts_path = POSTS_DIR / f"{date_str}.md"
-    research_path = RESEARCH_DIR / f"{date_str}.md"
-    critique_path = CRITIQUE_DIR / f"{date_str}.md"
+    posts_path = POSTS_DIR / f"{date_str}-post.md"
+    research_path = RESEARCH_DIR / f"{date_str}-research.md"
+    critique_path = CRITIQUE_DIR / f"{date_str}-critique.md"
 
     posts_path.write_text(posts_content, encoding="utf-8")
     research_path.write_text(research_content, encoding="utf-8")
