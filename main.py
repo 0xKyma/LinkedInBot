@@ -126,7 +126,7 @@ async def run(mbse_only: bool = False) -> int:
 
     # Phase 4: write output
     world_eval_text = world_research.raw_text if world_research else ""
-    posts_path, research_path = write_post_file(
+    posts_path, research_path, critique_path = write_post_file(
         today,
         mbse_research.raw_text,
         mbse_drafts,
@@ -135,7 +135,8 @@ async def run(mbse_only: bool = False) -> int:
         review if review.raw_text else None,
     )
     print(f"\nWrote drafts:   {posts_path}")
-    print(f"Wrote research: {research_path}\n")
+    print(f"Wrote research: {research_path}")
+    print(f"Wrote critique: {critique_path}\n")
     if mbse_drafts.has_drafts:
         print("--- MBSE DRAFTS ---\n", mbse_drafts.raw_text)
     if world_drafts.has_drafts:

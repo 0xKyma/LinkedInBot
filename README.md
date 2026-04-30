@@ -4,10 +4,11 @@ A multi-agent Python system that uses Claude with web search to find recent
 content in MBSE, SysML, systems engineering, defence, and energy, then drafts
 LinkedIn posts in your voice each day.
 
-Two output files are written to `posts/` each run:
+Three output files are written each run, each to its own folder:
 
-- `YYYY-MM-DD.md` — the draft posts, ready to review and pick from
-- `YYYY-MM-DD-research.md` — scoring tables, candidates considered, quality review notes
+- `posts/YYYY-MM-DD.md` — the draft posts, ready to review and pick from
+- `research/YYYY-MM-DD.md` — scoring tables and candidates considered
+- `critique/YYYY-MM-DD.md` — final drafts alongside the quality review notes
 
 ## Agent architecture
 
@@ -161,11 +162,14 @@ LinkedInBot/
 │   ├── drafting.py           # draft system prompts + revision prompt
 │   └── quality.py            # quality checklist system prompt
 ├── main.py                   # async orchestrator entry point
-├── output.py                 # writes posts/ files
+├── output.py                 # writes output files
 ├── prompts.py                # legacy entry point (preserved for compatibility)
-├── posts/                    # daily output lands here
-│   ├── YYYY-MM-DD.md         # draft posts
-│   └── YYYY-MM-DD-research.md
+├── posts/                    # draft posts
+│   └── YYYY-MM-DD.md
+├── research/                 # candidate scoring and evaluation
+│   └── YYYY-MM-DD.md
+├── critique/                 # final drafts + quality review notes
+│   └── YYYY-MM-DD.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -244,6 +248,6 @@ most effective lever is showing it what you actually wrote, not telling it what
 tone to hit.
 
 **Quality check keeps failing after 2 revision rounds**
-The offending rule is likely in `prompts/quality.py`. Check the research file
-(`YYYY-MM-DD-research.md`) for the `## Quality Review` section to see exactly
+The offending rule is likely in `prompts/quality.py`. Check `critique/YYYY-MM-DD.md`
+for the `## Quality Review` section to see exactly
 what was flagged, then either tighten the drafting prompt or relax the rule.
