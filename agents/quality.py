@@ -16,6 +16,11 @@ class ReviewResult:
     failed_notes: str = ""
 
 
+def _normalize(line: str) -> str:
+    """Strip markdown bold markers so **POST:** and POST: both match."""
+    return line.strip().replace("**", "")
+
+
 def _detect_failures(review_text: str) -> tuple[bool, str]:
     """Parse review output to find FAIL entries and extract their notes."""
     lines = review_text.splitlines()
@@ -26,7 +31,7 @@ def _detect_failures(review_text: str) -> tuple[bool, str]:
     issue_lines: list[str] = []
 
     for line in lines:
-        stripped = line.strip()
+        stripped = _normalize(line)
         if stripped.startswith("POST:"):
             if in_failed_post and issue_lines:
                 failed_sections.append(
