@@ -1,0 +1,57 @@
+# LinkedIn agent source feeds
+#
+# Add or remove feeds here. The agent will pull the most recent N items from
+# each on every run. Items older than LOOKBACK_DAYS (set in linkedin_agent.py)
+# are ignored.
+#
+# To add a feed, find its RSS/Atom URL and append a new entry with a name and
+# a url. Test with: python scripts/linkedin_agent.py --dry-run
+
+feeds:
+  # --- INCOSE and standards bodies ---
+  - name: "INCOSE Blog"
+    url: "https://www.incose.org/about-incose/news/blog/rss"
+
+  - name: "OMG News"
+    url: "https://www.omg.org/news/rss-feed.xml"
+
+  # --- MBSE practitioner blogs ---
+  - name: "MBSE Works (Tim Weilkiens)"
+    url: "https://mbse4u.com/feed/"
+
+  - name: "Project Performance International (Robert Halligan)"
+    url: "https://www.ppi-int.com/feed/"
+
+  - name: "Systems Engineering Blog (Lenny Delligatti)"
+    url: "https://lennydelligatti.com/feed/"
+
+  # --- Tool vendor / SysML v2 ---
+  - name: "Dassault Systemes Engineering Blog"
+    url: "https://blog.3ds.com/feed/"
+
+  - name: "No Magic / CATIA Magic blog"
+    url: "https://blog.nomagic.com/feed/"
+
+  # --- Academic / research ---
+  - name: "arXiv cs.SE (Software Engineering)"
+    url: "http://export.arxiv.org/rss/cs.SE"
+
+  - name: "arXiv eess.SY (Systems and Control)"
+    url: "http://export.arxiv.org/rss/eess.SY"
+
+  # --- Defence / industry context (Australian focus) ---
+  - name: "Defence Connect"
+    url: "https://www.defenceconnect.com.au/rss"
+
+  - name: "Australian Defence Magazine"
+    url: "https://www.australiandefence.com.au/feed"
+
+  - name: "Breaking Defense"
+    url: "https://breakingdefense.com/feed/"
+
+  # --- General SE / digital engineering ---
+  - name: "MITRE Systems Engineering"
+    url: "https://www.mitre.org/feeds/news"
+
+  - name: "NASA Systems Engineering"
+    url: "https://www.nasa.gov/news-release/feed/"
