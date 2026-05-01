@@ -34,6 +34,7 @@ from anthropic import AsyncAnthropic
 
 from agents.research import MBSEResearchAgent, WorldEventsResearchAgent
 from agents.drafting import MBSEDraftingAgent, WorldEventsDraftingAgent, DraftResult
+from agents.custom import CustomTopicAgent
 from agents.quality import QualityAgent, ReviewResult
 from output import write_post_file
 from prompts.research import SEARCH_USER_PROMPT_TEMPLATE, WORLD_EVENTS_USER_PROMPT_TEMPLATE
@@ -46,7 +47,11 @@ _EMPTY_REVIEW = ReviewResult(raw_text="", has_failures=False)
 MAX_REVISION_ROUNDS = 2
 
 
-async def run(mbse_only: bool = False) -> int:
+async def run(
+    mbse_only: bool = False,
+    topics: list[str] | None = None,
+    topic_angles: int = 3,
+) -> int:
     today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
     cutoff = (today - dt.timedelta(days=10)).isoformat()
     cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
@@ -57,6 +62,7 @@ async def run(mbse_only: bool = False) -> int:
     world_researcher = WorldEventsResearchAgent(client)
     mbse_drafter = MBSEDraftingAgent(client)
     world_drafter = WorldEventsDraftingAgent(client)
+    custom_agent = CustomTopicAgent(client)
     quality = QualityAgent(client)
 
     # Phase 1: parallel research
@@ -128,6 +134,15 @@ async def run(mbse_only: bool = False) -> int:
             if review.has_failures:
                 print(f"Some posts still have issues after {MAX_REVISION_ROUNDS} revision rounds.")
 
+    # Phase 3b: custom topics (run in parallel with each other)
+    custom_results: list[tuple[str, DraftResult]] = []
+    if topics:
+        print(f"\nStep 3b: Drafting {len(topics)} custom topic(s)...")
+        results = await asyncio.gather(
+            *(custom_agent.run(t, topic_angles) for t in topics)
+        )
+        custom_results = list(zip(topics, results))
+
     # Phase 4: write output
     world_eval_text = world_research.raw_text if world_research else ""
     posts_path, research_path, critique_path = write_post_file(
@@ -137,6 +152,7 @@ async def run(mbse_only: bool = False) -> int:
         world_eval_text,
         world_drafts,
         review if review.raw_text else None,
+        custom_drafts=custom_results or None,
     )
     print(f"\nWrote drafts:   {posts_path}")
     print(f"Wrote research: {research_path}")
@@ -145,6 +161,9 @@ async def run(mbse_only: bool = False) -> int:
         print("--- MBSE DRAFTS ---\n", mbse_drafts.raw_text)
     if world_drafts.has_drafts:
         print("--- WORLD EVENTS DRAFTS ---\n", world_drafts.raw_text)
+    for topic, draft in custom_results:
+        if draft.has_drafts:
+            print(f"--- CUSTOM: {topic} ---\n", draft.raw_text)
     return 0
 
 
@@ -154,6 +173,11 @@ def main(argv: list[str] | None = None) -> int:
                    help="Print the search prompts without calling Claude.")
     p.add_argument("--mbse-only", action="store_true",
                    help="Skip the world events track (saves ~2 API calls).")
+    p.add_argument("--topic", action="append", metavar="URL_OR_TEXT", dest="topics",
+                   help="Add a specific article or topic to draft posts about. "
+                        "Can be a URL or free text. Repeatable.")
+    p.add_argument("--topic-angles", type=int, default=3, metavar="N",
+                   help="Number of post angles to draft per custom topic (default: 3, max: 5).")
     args = p.parse_args(argv)
 
     today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
@@ -172,11 +196,19 @@ def main(argv: list[str] | None = None) -> int:
             ))
             print("\n=== STEP 4: World Events Draft ===\n")
             print("(drafts from selected event — no web search in this step)")
+        if args.topics:
+            for t in args.topics:
+                print(f"\n=== CUSTOM TOPIC: {t} ===\n")
+                print(f"(targeted search + {args.topic_angles} angle(s) drafted)")
         print("\n=== STEP 5: Quality Review ===\n")
         print("(all drafts reviewed against voice checklist, revisions applied if needed)")
         return 0
 
-    return asyncio.run(run(mbse_only=args.mbse_only))
+    return asyncio.run(run(
+        mbse_only=args.mbse_only,
+        topics=args.topics,
+        topic_angles=min(args.topic_angles, 5),
+    ))
 
 
 if __name__ == "__main__":

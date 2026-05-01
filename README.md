@@ -130,6 +130,27 @@ Output appears in `posts/YYYY-MM-DD.md` and `posts/YYYY-MM-DD-research.md`.
 python main.py --mbse-only
 ```
 
+### Add a specific article or topic
+
+Pass `--topic` with a URL or free-text description. The agent searches for
+context, then drafts posts alongside the regular tracks. Repeat the flag for
+multiple topics.
+
+```bash
+python main.py --topic "https://example.com/some-article"
+python main.py --topic "the new INCOSE paper on digital twins in defence"
+python main.py --topic "https://..." --topic "another article or topic"
+```
+
+Control how many post angles are drafted per custom topic (default 3, max 5):
+
+```bash
+python main.py --topic "https://..." --topic-angles 2
+```
+
+Available angles, used in order: Practitioner, Industry/trend, Contrarian,
+SE lens, Systems thinking.
+
 ## Run it daily via GitHub Actions
 
 The included workflow (`.github/workflows/daily.yml`) runs the agent on a schedule

@@ -23,10 +23,11 @@ def write_post_file(
     world_evaluation: str,
     world_drafts: DraftResult,
     review: ReviewResult | None = None,
+    custom_drafts: list[tuple[str, DraftResult]] | None = None,
 ) -> tuple[Path, Path, Path]:
     date_str = date.isoformat()
 
-    # posts/YYYY-MM-DD.md — draft posts only
+    # posts/YYYY-MM-DD-post.md — draft posts only
     posts_content = f"# LinkedIn Drafts — {date_str}\n\n"
     if mbse_drafts.has_drafts:
         posts_content += f"## Track 1: MBSE / SysML / Systems Engineering\n\n{mbse_drafts.raw_text}\n"
@@ -36,20 +37,28 @@ def write_post_file(
         posts_content += f"\n---\n\n## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n{world_drafts.raw_text}\n"
     elif world_evaluation:
         posts_content += "\n---\n\n## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n_No qualifying event found today._\n"
+    if custom_drafts:
+        for i, (topic, draft) in enumerate(custom_drafts, 1):
+            if draft.has_drafts:
+                posts_content += f"\n---\n\n## Custom Topic {i}: {topic}\n\n{draft.raw_text}\n"
 
-    # research/YYYY-MM-DD.md — candidate scoring and evaluation
+    # research/YYYY-MM-DD-research.md — candidate scoring and evaluation
     research_content = f"# Research & Scoring — {date_str}\n\n"
     research_content += f"## Track 1: MBSE / SysML / Systems Engineering\n\n{mbse_evaluation}\n"
     if world_evaluation:
         research_content += f"\n---\n\n## Track 2: World Events — Defence / Energy / Geopolitics (SE Lens)\n\n{world_evaluation}\n"
 
-    # critique/YYYY-MM-DD.md — final drafts alongside quality review notes
+    # critique/YYYY-MM-DD-critique.md — final drafts alongside quality review notes
     critique_content = f"# Drafts & Quality Review — {date_str}\n\n"
     critique_content += "## Final Drafts\n\n"
     if mbse_drafts.has_drafts:
         critique_content += f"### Track 1: MBSE / SysML / Systems Engineering\n\n{mbse_drafts.raw_text}\n"
     if world_drafts.has_drafts:
         critique_content += f"\n### Track 2: World Events\n\n{world_drafts.raw_text}\n"
+    if custom_drafts:
+        for i, (topic, draft) in enumerate(custom_drafts, 1):
+            if draft.has_drafts:
+                critique_content += f"\n### Custom Topic {i}: {topic}\n\n{draft.raw_text}\n"
     if review and review.raw_text:
         critique_content += f"\n---\n\n## Quality Review\n\n{review.raw_text}\n"
     else:
