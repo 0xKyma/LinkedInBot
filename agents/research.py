@@ -37,14 +37,22 @@ class ResearchResult:
     shortlist_summary: str = ""
 
 
+def _format_exclude(skip_urls: set[str] | None) -> str:
+    if not skip_urls:
+        return "None"
+    return "\n".join(f"- {u}" for u in sorted(skip_urls))
+
+
 class MBSEResearchAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
         super().__init__(client, SEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL])
 
-    async def run(self, today: dt.date) -> ResearchResult:
+    async def run(self, today: dt.date, skip_urls: set[str] | None = None) -> ResearchResult:
         cutoff = (today - dt.timedelta(days=10)).isoformat()
         user_prompt = SEARCH_USER_PROMPT_TEMPLATE.format(
-            today=today.isoformat(), cutoff=cutoff
+            today=today.isoformat(),
+            cutoff=cutoff,
+            exclude_sources=_format_exclude(skip_urls),
         )
         raw = await self._call(user_prompt)
         low = raw.lower()
@@ -56,10 +64,12 @@ class WorldEventsResearchAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
         super().__init__(client, WORLD_EVENTS_SEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL])
 
-    async def run(self, today: dt.date) -> ResearchResult:
+    async def run(self, today: dt.date, skip_urls: set[str] | None = None) -> ResearchResult:
         cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
         user_prompt = WORLD_EVENTS_USER_PROMPT_TEMPLATE.format(
-            today=today.isoformat(), cutoff_14d=cutoff_14d
+            today=today.isoformat(),
+            cutoff_14d=cutoff_14d,
+            exclude_sources=_format_exclude(skip_urls),
         )
         raw = await self._call(user_prompt)
         low = raw.lower()

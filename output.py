@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 from pathlib import Path
 
 from agents.drafting import DraftResult
@@ -14,6 +15,18 @@ CRITIQUE_DIR = REPO_ROOT / "critique"
 
 for _d in (POSTS_DIR, RESEARCH_DIR, CRITIQUE_DIR):
     _d.mkdir(exist_ok=True)
+
+_URL_RE = re.compile(r"URL:\s*(https?://\S+)", re.IGNORECASE)
+
+
+def get_used_sources(n: int = 2) -> set[str]:
+    """Return URLs mentioned in the most recent n research files."""
+    files = sorted(RESEARCH_DIR.glob("*-research.md"))[-n:]
+    urls: set[str] = set()
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        urls.update(m.group(1).rstrip(".,)\"'") for m in _URL_RE.finditer(text))
+    return urls
 
 
 def write_post_file(

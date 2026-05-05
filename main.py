@@ -36,7 +36,7 @@ from agents.research import MBSEResearchAgent, WorldEventsResearchAgent
 from agents.drafting import MBSEDraftingAgent, WorldEventsDraftingAgent, DraftResult
 from agents.custom import CustomTopicAgent
 from agents.quality import QualityAgent, ReviewResult
-from output import write_post_file
+from output import write_post_file, get_used_sources
 from prompts.research import SEARCH_USER_PROMPT_TEMPLATE, WORLD_EVENTS_USER_PROMPT_TEMPLATE
 
 TIMEZONE = os.environ.get("TIMEZONE", "Australia/Adelaide")
@@ -65,15 +65,20 @@ async def run(
     custom_agent = CustomTopicAgent(client)
     quality = QualityAgent(client)
 
+    # Load sources used in the last 2 runs to avoid repeats
+    skip_urls = get_used_sources(n=2)
+    if skip_urls:
+        print(f"Excluding {len(skip_urls)} source(s) already covered in the last 2 runs.")
+
     # Phase 1: parallel research
     print("Step 1: Searching MBSE/SysML candidates and world events in parallel...")
     if mbse_only:
-        mbse_research = await mbse_researcher.run(today)
+        mbse_research = await mbse_researcher.run(today, skip_urls=skip_urls)
         world_research = None
     else:
         mbse_research, world_research = await asyncio.gather(
-            mbse_researcher.run(today),
-            world_researcher.run(today),
+            mbse_researcher.run(today, skip_urls=skip_urls),
+            world_researcher.run(today, skip_urls=skip_urls),
         )
 
     print(mbse_research.raw_text)
@@ -185,14 +190,19 @@ def main(argv: list[str] | None = None) -> int:
     cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
 
     if args.dry_run:
+        skip_urls = get_used_sources(n=2)
+        from agents.research import _format_exclude
+        exclude_str = _format_exclude(skip_urls)
         print("=== STEP 1: MBSE Search & Evaluate ===\n")
-        print(SEARCH_USER_PROMPT_TEMPLATE.format(today=today.isoformat(), cutoff=cutoff))
+        print(SEARCH_USER_PROMPT_TEMPLATE.format(
+            today=today.isoformat(), cutoff=cutoff, exclude_sources=exclude_str
+        ))
         print("\n=== STEP 2: MBSE Draft ===\n")
         print("(drafts from shortlist — no web search in this step)")
         if not args.mbse_only:
             print("\n=== STEP 3: World Events Search & Evaluate ===\n")
             print(WORLD_EVENTS_USER_PROMPT_TEMPLATE.format(
-                today=today.isoformat(), cutoff_14d=cutoff_14d
+                today=today.isoformat(), cutoff_14d=cutoff_14d, exclude_sources=exclude_str
             ))
             print("\n=== STEP 4: World Events Draft ===\n")
             print("(drafts from selected event — no web search in this step)")

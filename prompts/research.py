@@ -66,6 +66,9 @@ List the 2–3 items you will draft posts from.
 
 SEARCH_USER_PROMPT_TEMPLATE = """Today is {today}.
 
+ALREADY COVERED — do not select any of these sources (they appeared in the last 2 runs):
+{exclude_sources}
+
 Search the web for content published in the last 10 days matching the topic
 priorities above. Cast a wide net first (8–12 candidates), then score and
 filter down to the 2–3 strongest items.
@@ -157,6 +160,9 @@ The single item selected (or explicit statement that no item met the bar).
 """
 
 WORLD_EVENTS_USER_PROMPT_TEMPLATE = """Today is {today}.
+
+ALREADY COVERED — do not select any of these sources (they appeared in the last 2 runs):
+{exclude_sources}
 
 Search for significant recent events in defence, energy, and geopolitics that
 have a genuine systems thinking or systems engineering angle.
