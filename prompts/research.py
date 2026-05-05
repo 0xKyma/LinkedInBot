@@ -49,6 +49,9 @@ After scoring, select the TOP 2–3 items (highest combined score) to write post
 If you cannot find at least 2 strong candidates (combined score ≥ 15), say so explicitly
 rather than padding with weak content.
 
+Tiebreaker: if two items have equal combined scores, prefer the one with the higher
+Debate Potential score. If still tied, prefer the more recent item.
+
 OUTPUT FORMAT for this step:
 ## Candidates Found
 For each item found (before filtering):
@@ -142,6 +145,9 @@ EVALUATION CRITERIA — score each candidate 1–5 on:
 
 Select the SINGLE BEST item (highest combined score, minimum 15/25) for drafting.
 If no item scores ≥ 15, say so explicitly. Do not pad with weak content.
+
+Tiebreaker: if two items have equal combined scores, prefer the one with the higher
+Debate Potential score. If still tied, prefer the more recent item.
 
 OUTPUT FORMAT:
 ## World Events Candidates

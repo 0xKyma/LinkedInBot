@@ -15,7 +15,14 @@ DRAFTING RULES:
 - For each item, the three angles must be meaningfully different, not the same take reworded:
     Option 1: Practitioner angle — what does this mean for someone doing MBSE today?
     Option 2: Industry/trend angle — what does this signal about where SE is heading?
-    Option 3: Contrarian or uncomfortable angle — what's the thing nobody wants to say about this?
+    Option 3: Contrarian angle — challenge a widely held assumption in the MBSE/SE community.
+      Not "this is harder than people say" (too vague). Aim for one of these frames:
+        - The mainstream fix for this problem makes it worse
+        - This is presented as progress but solves the wrong problem
+        - The community is avoiding the real conversation here
+        - The thing everyone is excited about only works under conditions nobody has
+        - We've had this capability before and it didn't help — here's why this time is the same
+      The contrarian angle must be a specific, arguable position — not just a dose of scepticism.
 - 100–175 words each
 - Include the source link naturally in the post or as a "Source:" line at the end
 - 2–3 hashtags, placed at the very end

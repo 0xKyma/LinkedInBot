@@ -213,16 +213,25 @@ Edit `prompts/shared.py`. Key rules currently in place:
 
 - Posts are 100-175 words
 - Structure: hook, context, opinion, ending (question or statement)
+- Hook must make a specific, contestable claim — not a hollow tease or setup
 - No em dashes
-- No "it's not X, it's Y" or similar rhetorical contrasts
+- No "it's not X, it's Y" or any structural variant (less about X more about Y,
+  X is the wrong framing, forget X the real issue is Y, etc.)
+- No passive voice
 - Plain connectors preferred (and, but, so, because)
 - Write like an early-careers professional: direct, plain, no flourishes
 - AU/UK English (programme, organisation, modelling)
-- No corporate clichés, no more than 3 hashtags
+- No corporate clichés (including leverage, move the needle, on a journey, etc.)
+- No more than 3 hashtags
+- No forbidden openers (I, Just, There's a pattern, We need to talk about, etc.)
 
 The `QualityAgent` enforces these rules automatically and triggers a rewrite
 if a draft fails. After a few weeks of real runs you will see what it still
 gets wrong. Tighten the rules in `prompts/shared.py` and `prompts/quality.py`.
+
+The highest-leverage improvement is adding real post examples to `VOICE_EXAMPLES`
+in `prompts/shared.py`. The model learns cadence and vocabulary from concrete
+instances far better than from descriptions alone.
 
 ### Source deduplication window
 
