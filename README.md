@@ -83,10 +83,12 @@ consecutive daily runs.
 **Track 1: MBSE / SysML / Systems Engineering**
 - Runs 10 web searches across SysML v2, MBSE methodology, digital engineering,
   arXiv preprints, IEEE papers, INCOSE proceedings, and NASA/MITRE/RAND reports
-- Scores each candidate on relevance, novelty, practicality, timeliness, and
-  debate potential (max 25 points)
+- Scores each candidate on 5 anchored criteria (max 25 points): Relevance, Novelty,
+  Practicality, Timeliness (full 1–5 scale, not a 3-point cliff), and Debate Potential
+- Scores the top 5 candidates before selecting, so the research file shows why
+  borderline items were included or dropped
 - Selects the top 2-3 items and drafts 3 posts per item (practitioner angle,
-  industry/trend angle, contrarian angle)
+  industry/trend angle, contrarian angle with specific required frames)
 - Publications (arXiv, IEEE, INCOSE, RAND) are accepted up to 90 days old if
   the content is genuinely novel for the audience
 
@@ -94,6 +96,7 @@ consecutive daily runs.
 - Runs 6 web searches across defence procurement, energy policy, and geopolitical events
 - Looks for a systems thinking or SE angle (feedback loops, unintended consequences,
   interface failures, requirements volatility, verification gaps, etc.)
+- Scores the top 4 candidates on 5 anchored criteria before selecting
 - Selects the single best event (min 15/25) and drafts 2 posts: one using an SE
   methodology frame, one using a broader systems thinking frame
 - Uses a 14-day lookback window
@@ -252,7 +255,10 @@ Edit `prompts/research.py` — `SEARCH_USER_PROMPT_TEMPLATE` for MBSE queries,
 ### Scoring and selection
 
 Edit the system prompts in `prompts/research.py` to adjust scoring rubrics,
-minimum score thresholds, or inclusion/exclusion rules.
+minimum score thresholds, or inclusion/exclusion rules. Each criterion has
+anchored 1 and 5 examples to keep scores consistent across runs — update
+these if the domain focus shifts. The minimum qualifying score is 15/25
+for both tracks.
 
 ### Run frequency
 

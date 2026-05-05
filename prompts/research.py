@@ -39,11 +39,35 @@ PUBLICATION QUALITY — apply these rules to academic and technical report sourc
 - Workshop position papers with no empirical content or novel argument: exclude.
 
 EVALUATION CRITERIA — score each candidate 1–5 on:
-  Relevance:    How directly does it address SysML/MBSE practice?
-  Novelty:      Is this genuinely new information or a fresh angle on a live debate?
+
+  Relevance: How directly does it address SysML/MBSE practice?
+    5 — directly addresses SysML/MBSE practice with specific findings or tools
+        (e.g. a new SysML v2 tooling adoption study in aerospace)
+    1 — mentions "systems" in passing; primarily about another field
+        (e.g. a software DevOps post with one sentence referencing SE)
+
+  Novelty: Is this genuinely new information or a fresh angle on a live debate?
+    5 — first empirical study, new spec release, or original finding not yet
+        discussed in SE community channels
+    1 — restatement of existing MBSE documentation or widely-known information
+        with no new angle or argument
+
   Practicality: Can a working systems engineer act on or argue with this?
-  Timeliness:   How recent is it? (Last 3 days = 5, 4–7 days = 3, older = 1)
-  Debate potential: Will this make Photi's audience agree, disagree, or share?
+    5 — a practitioner can directly apply, adopt, or push back on this
+        (new tool comparison, methodology ROI data, process failure analysis)
+    1 — purely theoretical with no actionable takeaway for practitioners
+
+  Timeliness: How recent is it?
+    5 — published in the last 2 days
+    4 — published 3–4 days ago
+    3 — published 5–7 days ago
+    2 — published 8–10 days ago
+    1 — older (publications only, up to 90 days, if genuinely novel)
+
+  Debate Potential: Will this generate a professional reaction from Photi's audience?
+    5 — challenges a prevailing assumption or presents data that contradicts
+        common practice (e.g. empirical evidence that MBSE ROI claims are overstated)
+    1 — uncontroversial announcement or incremental update nobody will disagree with
 
 After scoring, select the TOP 2–3 items (highest combined score) to write posts about.
 If you cannot find at least 2 strong candidates (combined score ≥ 15), say so explicitly
@@ -58,13 +82,14 @@ For each item found (before filtering):
   - Title, source, URL, date, brief summary (2 sentences max)
 
 ## Scored Shortlist
-For each item you're keeping:
+Score the top 5 candidates (by your initial assessment) even if you will not select
+all of them. This makes the scoring auditable.
   - Title + URL
   - Scores: Relevance X | Novelty X | Practicality X | Timeliness X | Debate X | Total: X/25
-  - One sentence on why this is worth a post
+  - One sentence on why this is or isn't worth a post
 
 ## Selected for Drafting
-List the 2–3 items you will draft posts from.
+List the 2–3 items you will draft posts from, and one sentence on why each beat the others.
 """
 
 SEARCH_USER_PROMPT_TEMPLATE = """Today is {today}.
@@ -137,11 +162,33 @@ EXCLUDE:
 - Events older than 14 days
 
 EVALUATION CRITERIA — score each candidate 1–5 on:
-  SE Angle Strength:  How non-obvious and genuinely systems-thinking is the angle?
+
+  SE Angle Strength: How non-obvious and genuinely systems-thinking is the angle?
+    5 — the insight is specific, non-obvious, and challenges how practitioners think
+        (e.g. a procurement failure that exposes a requirements traceability gap
+        the industry actively avoids discussing)
+    1 — the "angle" is just "this event involves a complex system" — no specific
+        SE insight beyond surface-level observation
+
   Audience Relevance: Will Photi's SE/MBSE audience see themselves in this?
-  Debate Potential:   Will it provoke a reaction, share, or position-taking?
-  Event Significance: Is this a genuinely important event, not a minor news item?
-  Timeliness:         How recent? (Last 5 days = 5, 6–10 days = 3, 11–14 days = 2)
+    5 — the event directly involves practice areas the audience works in
+        (defence acquisition, energy system integration, aerospace programme management)
+    1 — geopolitical or energy event with no clear connection to engineering practice
+
+  Debate Potential: Will it generate a professional reaction from Photi's audience?
+    5 — will make engineers want to respond, share, or argue about their own experience
+    1 — interesting news but generates no professional response or position-taking
+
+  Event Significance: Is this a genuinely important event?
+    5 — major programme decision, significant failure, or policy change with wide
+        industry impact
+    1 — minor news item or incremental development unlikely to affect practice
+
+  Timeliness: How recent is the event?
+    5 — occurred in the last 3 days
+    4 — occurred 4–6 days ago
+    3 — occurred 7–10 days ago
+    2 — occurred 11–14 days ago
 
 Select the SINGLE BEST item (highest combined score, minimum 15/25) for drafting.
 If no item scores ≥ 15, say so explicitly. Do not pad with weak content.
@@ -156,13 +203,15 @@ For each item found:
   - The specific SE/systems thinking angle identified
 
 ## World Events Scored Shortlist
-For the top 2–3 items:
+Score the top 4 candidates (by your initial assessment) even if you will not select
+all of them. This makes the scoring auditable.
   - Event + URL
   - Scores: SE Angle X | Audience Relevance X | Debate Potential X | Event Significance X | Timeliness X | Total: X/25
-  - One sentence on the post angle
+  - One sentence on why this is or isn't the best pick
 
 ## Selected World Event for Drafting
-The single item selected (or explicit statement that no item met the bar).
+The single item selected (or explicit statement that no item met the bar), and one
+sentence on why it beat the others.
 """
 
 WORLD_EVENTS_USER_PROMPT_TEMPLATE = """Today is {today}.

@@ -15,6 +15,14 @@ DRAFTING RULES:
 - For each item, the three angles must be meaningfully different, not the same take reworded:
     Option 1: Practitioner angle — what does this mean for someone doing MBSE today?
     Option 2: Industry/trend angle — what does this signal about where SE is heading?
+      Not "the industry is moving toward..." (too vague). Aim for one of these frames:
+        - The adoption gap: what's the distance between this capability and actual practice,
+          and what's keeping them apart?
+        - The displacement: what is this replacing, and what transition risk does that create?
+        - The money signal: what does vendor or standards-body behaviour here reveal about
+          where investment is actually going?
+        - The adjacent threat: which neighbouring discipline is about to absorb this problem
+          and solve it differently?
     Option 3: Contrarian angle — challenge a widely held assumption in the MBSE/SE community.
       Not "this is harder than people say" (too vague). Aim for one of these frames:
         - The mainstream fix for this problem makes it worse
@@ -52,9 +60,9 @@ angle. Draft two LinkedIn post options in her voice.
 SPECIAL RULES FOR WORLD EVENTS POSTS:
 - The post MUST lead with the systems thinking insight, not the news headline.
   Wrong: "The F-35 program has experienced another delay..."
-  Right: "Most major defence programs that fail on integration were approved on
-          solid requirements. The F-35 delays come down to systems architecture,
-          not schedule management."
+  Right: "Most major defence programmes that struggle with integration were approved
+          on solid requirements. The architecture assumptions made early are what break
+          late — and by then the schedule is already gone."
 - The post should make an SE or systems thinking point that is genuinely non-obvious.
   Anyone can report news. Photi's value is the frame.
 - Avoid any language that reads as political endorsement or partisan commentary.
@@ -88,6 +96,7 @@ REVISION RULES:
 - Fix only the specific issues listed in the reviewer feedback
 - Keep the angle, source reference, and core argument unchanged
 - Do not change what is already working
+- Do not introduce facts, figures, or claims not already present in the original draft
 - Return only the revised post text, with no explanation or commentary
 - Maintain the same output format as the original (same section headers)
 """
