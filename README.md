@@ -136,6 +136,44 @@ python main.py
 
 Output appears in `posts/YYYY-MM-DD.md` and `posts/YYYY-MM-DD-research.md`.
 
+### Draft a specific post on demand
+
+Run the interactive drafter when you want to write about something specific,
+without running the daily research tracks:
+
+```bash
+python draft.py
+```
+
+You will be prompted to choose a mode:
+
+```
+=== LinkedIn Post Drafter ===
+
+How would you like to create your post?
+  1. Article URL  — paste a link; the agent researches and drafts
+  2. Your info    — paste dot points or guidance; draft directly from your input
+  3. Topic search — describe a topic; the agent searches and drafts
+```
+
+Then choose an angle (Practitioner by default, or Contrarian / Industry/trend /
+SE lens / Systems thinking).
+
+One post is drafted per run. The final post is saved to `manual/YYYY-MM-DD-HHMM.md`.
+No research or critique files are written — only the finished post.
+
+The quality check and revision loop run the same as the daily pipeline.
+
+**Mode 1 — Article URL:** paste a link to any article; the agent fetches and
+summarises it, then drafts a post grounded in that content.
+
+**Mode 2 — Your info:** paste dot points, a rough argument, or any guidance;
+the agent drafts directly from your input without searching for anything else.
+No external facts are introduced.
+
+**Mode 3 — Topic search:** describe a topic in plain language; the agent
+searches the web for relevant recent content and drafts from what it finds.
+
 ### MBSE track only (saves ~2 API calls)
 
 ```bash
@@ -188,21 +226,27 @@ LinkedInBot/
 │   ├── base.py               # BaseAgent wrapping AsyncAnthropic
 │   ├── research.py           # MBSEResearchAgent, WorldEventsResearchAgent
 │   ├── drafting.py           # MBSEDraftingAgent, WorldEventsDraftingAgent
-│   └── quality.py            # QualityAgent
+│   ├── quality.py            # QualityAgent
+│   └── manual.py             # ManualDraftAgent (used by draft.py)
 ├── prompts/
 │   ├── shared.py             # AUDIENCE, VOICE_EXAMPLES
 │   ├── research.py           # search system prompts + user prompt templates
 │   ├── drafting.py           # draft system prompts + revision prompt
-│   └── quality.py            # quality checklist system prompt
-├── main.py                   # async orchestrator entry point
+│   ├── quality.py            # quality checklist system prompt
+│   ├── custom.py             # custom topic research + draft prompts
+│   └── manual.py             # on-demand drafting prompts (info and source modes)
+├── main.py                   # daily run entry point
+├── draft.py                  # interactive on-demand drafter
 ├── output.py                 # writes output files
 ├── prompts.py                # legacy entry point (preserved for compatibility)
-├── posts/                    # draft posts
+├── posts/                    # daily draft posts
 │   └── YYYY-MM-DD-post.md
 ├── research/                 # candidate scoring and evaluation
 │   └── YYYY-MM-DD-research.md
 ├── critique/                 # final drafts + quality review notes
 │   └── YYYY-MM-DD-critique.md
+├── manual/                   # on-demand posts from draft.py
+│   └── YYYY-MM-DD-HHMM.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
