@@ -2,7 +2,8 @@
 
 A multi-agent Python system that uses Claude with web search to find recent
 content in MBSE, SysML, systems engineering, defence, and energy, then drafts
-LinkedIn posts in your voice each day.
+LinkedIn posts in your voice each day. Sources from the last 2 runs are
+automatically excluded so the same article is never drafted twice.
 
 Three output files are written each run, each to its own folder:
 
@@ -70,6 +71,14 @@ after research completes. Total wall-clock time is roughly half that of sequenti
 execution.
 
 ## How it works
+
+**Source deduplication**
+
+Before any searches run, `output.py` scans the two most recent
+`research/YYYY-MM-DD-research.md` files and extracts every URL they mention.
+Both research agents receive that list and are instructed not to select any
+of those sources. This prevents the same article from appearing across
+consecutive daily runs.
 
 **Track 1: MBSE / SysML / Systems Engineering**
 - Runs 10 web searches across SysML v2, MBSE methodology, digital engineering,
@@ -215,6 +224,17 @@ The `QualityAgent` enforces these rules automatically and triggers a rewrite
 if a draft fails. After a few weeks of real runs you will see what it still
 gets wrong. Tighten the rules in `prompts/shared.py` and `prompts/quality.py`.
 
+### Source deduplication window
+
+By default, sources from the last 2 runs are excluded. To change the window,
+edit the `get_used_sources(n=2)` call in `main.py`:
+
+```python
+skip_urls = get_used_sources(n=3)   # look back 3 runs
+skip_urls = get_used_sources(n=1)   # only exclude yesterday's sources
+skip_urls = get_used_sources(n=0)   # disable deduplication
+```
+
 ### Search topics
 
 Edit `prompts/research.py` — `SEARCH_USER_PROMPT_TEMPLATE` for MBSE queries,
@@ -281,6 +301,12 @@ Add more of your own writing as examples to `VOICE_EXAMPLES` in `prompts/shared.
 or add specific failing patterns to the checklist in `prompts/quality.py`. The
 most effective lever is showing it what you actually wrote, not telling it what
 tone to hit.
+
+**Both tracks find nothing after adding deduplication**
+The exclusion list may be filtering out too many candidates if there has been
+a quiet news period. Try reducing the window: `get_used_sources(n=1)` in
+`main.py`, or run with `--dry-run` to see the full exclusion list being sent
+to the agents.
 
 **Quality check keeps failing after 2 revision rounds**
 The offending rule is likely in `prompts/quality.py`. Check `critique/YYYY-MM-DD-critique.md`
