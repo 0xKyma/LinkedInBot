@@ -16,7 +16,11 @@ import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from dotenv import load_dotenv
+
 from anthropic import AsyncAnthropic
+
+load_dotenv()
 
 from agents.drafting import DraftResult, MBSEDraftingAgent
 from agents.manual import ManualDraftAgent

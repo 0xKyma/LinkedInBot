@@ -30,7 +30,11 @@ import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from dotenv import load_dotenv
+
 from anthropic import AsyncAnthropic
+
+load_dotenv()
 
 from agents.research import MBSEResearchAgent, WorldEventsResearchAgent
 from agents.drafting import MBSEDraftingAgent, WorldEventsDraftingAgent, DraftResult

@@ -17,7 +17,11 @@ import datetime as dt
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from anthropic import Anthropic
+
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Paths & config

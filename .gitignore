@@ -1,3 +1,16 @@
 .claude/
 __pycache__/
 *.pyc
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# API keys - never commit
+.env
+
+# OS
+.DS_Store
+Thumbs.db
