@@ -13,20 +13,39 @@ from prompts.research import (
 )
 from .base import BaseAgent, WEB_SEARCH_TOOL
 
+# Phrases that only appear in the agent's explicit "nothing qualified" statement,
+# not inside candidate descriptions. Checked only against the selection-summary
+# section to avoid false negatives from matching quotes within candidate text.
 _NO_CANDIDATES_SIGNALS = (
     "cannot find",
     "no strong candidates",
-    "did not meet",
-    "no qualifying",
+    "no candidates met",
+    "no qualifying candidates",
+    "did not meet the bar",
+    "did not meet the threshold",
+    "no items met",
 )
 
 _NO_WORLD_EVENT_SIGNALS = (
-    "no item",
+    "no item met",
+    "no item scored",
     "no strong candidates",
-    "did not meet",
-    "no event",
-    "no qualifying",
+    "no qualifying event",
+    "no event scored",
+    "no event met",
 )
+
+# Section headers that introduce the agent's final selection summary.
+# Checking only this section avoids false negatives from signal phrases
+# appearing inside candidate descriptions earlier in the response.
+_MBSE_SELECTION_HEADER = "## selected for drafting"
+_WORLD_SELECTION_HEADER = "## selected world event for drafting"
+
+
+def _selection_section(raw: str, header: str) -> str:
+    """Return the text from the final selection header onwards, or full text if not found."""
+    idx = raw.lower().rfind(header)
+    return raw[idx:] if idx != -1 else raw
 
 
 @dataclass
@@ -55,8 +74,8 @@ class MBSEResearchAgent(BaseAgent):
             exclude_sources=_format_exclude(skip_urls),
         )
         raw = await self._call(user_prompt)
-        low = raw.lower()
-        has_candidates = not any(sig in low for sig in _NO_CANDIDATES_SIGNALS)
+        check = _selection_section(raw, _MBSE_SELECTION_HEADER).lower()
+        has_candidates = not any(sig in check for sig in _NO_CANDIDATES_SIGNALS)
         return ResearchResult(track="mbse", raw_text=raw, has_candidates=has_candidates)
 
 
@@ -72,6 +91,6 @@ class WorldEventsResearchAgent(BaseAgent):
             exclude_sources=_format_exclude(skip_urls),
         )
         raw = await self._call(user_prompt)
-        low = raw.lower()
-        has_candidates = not any(sig in low for sig in _NO_WORLD_EVENT_SIGNALS)
+        check = _selection_section(raw, _WORLD_SELECTION_HEADER).lower()
+        has_candidates = not any(sig in check for sig in _NO_WORLD_EVENT_SIGNALS)
         return ResearchResult(track="world_events", raw_text=raw, has_candidates=has_candidates)
