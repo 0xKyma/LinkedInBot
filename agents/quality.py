@@ -76,6 +76,6 @@ class QualityAgent(BaseAgent):
             "Review all of the following LinkedIn post drafts against the checklist:\n\n"
             + combined
         )
-        raw = await self._call(user_prompt)
+        raw = await self._call(user_prompt, max_tokens=2048)
         has_failures, failed_notes = _detect_failures(raw)
         return ReviewResult(raw_text=raw, has_failures=has_failures, failed_notes=failed_notes)

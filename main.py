@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import datetime as dt
+import logging
 import os
 import sys
 from pathlib import Path
@@ -35,6 +36,8 @@ from dotenv import load_dotenv
 from anthropic import AsyncAnthropic
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 from agents.research import MBSEResearchAgent, WorldEventsResearchAgent
 from agents.drafting import MBSEDraftingAgent, WorldEventsDraftingAgent, DraftResult
