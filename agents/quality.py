@@ -14,6 +14,8 @@ class ReviewResult:
     raw_text: str
     has_failures: bool
     failed_notes: str = ""
+    mbse_failed_notes: str = ""
+    world_failed_notes: str = ""
 
 
 def _normalize(line: str) -> str:
@@ -21,22 +23,33 @@ def _normalize(line: str) -> str:
     return line.strip().replace("**", "")
 
 
-def _detect_failures(review_text: str) -> tuple[bool, str]:
-    """Parse review output to find FAIL entries and extract their notes."""
+def _detect_failures(review_text: str) -> tuple[bool, str, str, str]:
+    """Parse review output to find FAIL entries and extract their notes.
+
+    Returns (has_failures, all_failed_notes, mbse_failed_notes, world_failed_notes).
+    Track membership is determined by "## Track 1" / "## Track 2" headers that
+    the quality agent receives from the combined input.
+    """
     lines = review_text.splitlines()
-    failed_sections: list[str] = []
+    mbse_sections: list[str] = []
+    world_sections: list[str] = []
     current_post = ""
+    current_track = "mbse"
     in_failed_post = False
     collecting_issues = False
     issue_lines: list[str] = []
 
     for line in lines:
         stripped = _normalize(line)
-        if stripped.startswith("POST:"):
+        lower = stripped.lower()
+        if lower.startswith("## track 1") or lower.startswith("# track 1"):
+            current_track = "mbse"
+        elif lower.startswith("## track 2") or lower.startswith("# track 2"):
+            current_track = "world"
+        elif stripped.startswith("POST:"):
             if in_failed_post and issue_lines:
-                failed_sections.append(
-                    f"{current_post}\n" + "\n".join(issue_lines)
-                )
+                entry = f"{current_post}\n" + "\n".join(issue_lines)
+                (mbse_sections if current_track == "mbse" else world_sections).append(entry)
             current_post = stripped[len("POST:"):].strip()
             in_failed_post = False
             collecting_issues = False
@@ -51,11 +64,17 @@ def _detect_failures(review_text: str) -> tuple[bool, str]:
                 issue_lines.append(stripped)
 
     if in_failed_post and issue_lines:
-        failed_sections.append(f"{current_post}\n" + "\n".join(issue_lines))
+        entry = f"{current_post}\n" + "\n".join(issue_lines)
+        (mbse_sections if current_track == "mbse" else world_sections).append(entry)
 
-    has_failures = bool(failed_sections)
-    failed_notes = "\n\n".join(failed_sections)
-    return has_failures, failed_notes
+    all_sections = mbse_sections + world_sections
+    has_failures = bool(all_sections)
+    return (
+        has_failures,
+        "\n\n".join(all_sections),
+        "\n\n".join(mbse_sections),
+        "\n\n".join(world_sections),
+    )
 
 
 class QualityAgent(BaseAgent):
@@ -77,5 +96,11 @@ class QualityAgent(BaseAgent):
             + combined
         )
         raw = await self._call(user_prompt, max_tokens=2048)
-        has_failures, failed_notes = _detect_failures(raw)
-        return ReviewResult(raw_text=raw, has_failures=has_failures, failed_notes=failed_notes)
+        has_failures, failed_notes, mbse_notes, world_notes = _detect_failures(raw)
+        return ReviewResult(
+            raw_text=raw,
+            has_failures=has_failures,
+            failed_notes=failed_notes,
+            mbse_failed_notes=mbse_notes,
+            world_failed_notes=world_notes,
+        )

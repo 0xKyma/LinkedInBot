@@ -130,13 +130,13 @@ async def run(
             print(f"\nStep 3b: Revising flagged posts (round {round_num})...")
 
             async def _revise_mbse():
-                if mbse_drafts.has_drafts and review.failed_notes:
-                    return await mbse_drafter.revise(mbse_drafts, review.failed_notes)
+                if mbse_drafts.has_drafts and review.mbse_failed_notes:
+                    return await mbse_drafter.revise(mbse_drafts, review.mbse_failed_notes)
                 return mbse_drafts
 
             async def _revise_world():
-                if world_drafts.has_drafts and review.failed_notes:
-                    return await world_drafter.revise(world_drafts, review.failed_notes)
+                if world_drafts.has_drafts and review.world_failed_notes:
+                    return await world_drafter.revise(world_drafts, review.world_failed_notes)
                 return world_drafts
 
             mbse_drafts, world_drafts = await asyncio.gather(_revise_mbse(), _revise_world())
