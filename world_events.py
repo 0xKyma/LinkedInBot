@@ -53,9 +53,9 @@ async def run() -> int:
     world_drafter = WorldEventsDraftingAgent(client)
     quality = QualityAgent(client)
 
-    skip_urls = get_used_sources(n=2)
+    skip_urls = get_used_sources()
     if skip_urls:
-        print(f"Excluding {len(skip_urls)} source(s) already covered in the last 2 runs.")
+        print(f"Excluding {len(skip_urls)} source(s) from covered sources list.")
 
     print("Step 1: Searching world events candidates...")
     world_research = await world_researcher.run(today, skip_urls=skip_urls)
@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.dry_run:
         today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
         cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
-        skip_urls = get_used_sources(n=2)
+        skip_urls = get_used_sources()
         from agents.research import _format_exclude
         exclude_str = _format_exclude(skip_urls)
         print("=== STEP 1: World Events Search & Evaluate ===\n")

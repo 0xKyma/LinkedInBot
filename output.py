@@ -12,6 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parent
 POSTS_DIR = REPO_ROOT / "posts"
 RESEARCH_DIR = REPO_ROOT / "research"
 CRITIQUE_DIR = REPO_ROOT / "critique"
+COVERED_SOURCES_FILE = REPO_ROOT / "covered_sources.txt"
 
 for _d in (POSTS_DIR, RESEARCH_DIR, CRITIQUE_DIR):
     _d.mkdir(exist_ok=True)
@@ -19,14 +20,47 @@ for _d in (POSTS_DIR, RESEARCH_DIR, CRITIQUE_DIR):
 _URL_RE = re.compile(r"URL:\s*(https?://\S+)", re.IGNORECASE)
 
 
-def get_used_sources(n: int = 2) -> set[str]:
-    """Return URLs mentioned in the most recent n research files."""
-    files = sorted(RESEARCH_DIR.glob("*-research.md"))[-n:]
-    urls: set[str] = set()
-    for f in files:
+def _load_covered_sources() -> set[str]:
+    if not COVERED_SOURCES_FILE.exists():
+        return set()
+    return {
+        line.strip()
+        for line in COVERED_SOURCES_FILE.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+
+
+def _seed_covered_sources() -> None:
+    """Populate covered_sources.txt from all existing research files on first use."""
+    all_urls: set[str] = set()
+    for f in sorted(RESEARCH_DIR.glob("*-research.md")):
         text = f.read_text(encoding="utf-8")
-        urls.update(m.group(1).rstrip(".,)\"'") for m in _URL_RE.finditer(text))
-    return urls
+        all_urls.update(m.group(1).rstrip(".,)\"'") for m in _URL_RE.finditer(text))
+    with COVERED_SOURCES_FILE.open("w", encoding="utf-8") as fh:
+        fh.write("# All sources ever researched or drafted about — updated each run\n\n")
+        for url in sorted(all_urls):
+            fh.write(url + "\n")
+
+
+def get_used_sources() -> set[str]:
+    """Return all URLs in the persistent covered sources list."""
+    if not COVERED_SOURCES_FILE.exists():
+        _seed_covered_sources()
+    return _load_covered_sources()
+
+
+def _update_covered_sources(research_text: str) -> None:
+    """Append any new URLs from this run's research output to covered_sources.txt."""
+    new_urls = {m.group(1).rstrip(".,)\"'") for m in _URL_RE.finditer(research_text)}
+    if not new_urls:
+        return
+    existing = _load_covered_sources()
+    to_add = sorted(new_urls - existing)
+    if not to_add:
+        return
+    with COVERED_SOURCES_FILE.open("a", encoding="utf-8") as fh:
+        for url in to_add:
+            fh.write(url + "\n")
 
 
 def write_post_file(
@@ -84,5 +118,7 @@ def write_post_file(
     posts_path.write_text(posts_content, encoding="utf-8")
     research_path.write_text(research_content, encoding="utf-8")
     critique_path.write_text(critique_content, encoding="utf-8")
+
+    _update_covered_sources(mbse_evaluation + "\n" + world_evaluation)
 
     return posts_path, research_path, critique_path
