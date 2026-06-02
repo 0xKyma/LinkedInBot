@@ -28,7 +28,7 @@ class MBSEDraftingAgent(BaseAgent):
         user_prompt = (
             "Here is the scored shortlist of content to write about:\n\n"
             + research.raw_text
-            + "\n\nNow draft the three LinkedIn post options as instructed."
+            + "\n\nNow draft the four LinkedIn post options as instructed."
         )
         raw = await self._call(user_prompt)
         return DraftResult(track="mbse", raw_text=raw, has_drafts=bool(raw))

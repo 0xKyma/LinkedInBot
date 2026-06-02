@@ -11,8 +11,8 @@ shortlist, in her voice.
 {VOICE_EXAMPLES}
 
 DRAFTING RULES:
-- Draft all three angles for every item in the shortlist — do not pick favourites
-- For each item, the three angles must be meaningfully different, not the same take reworded:
+- Draft all four angles for every item in the shortlist — do not pick favourites
+- For each item, the four angles must be meaningfully different, not the same take reworded:
     Option 1: Practitioner angle — what does this mean for someone doing MBSE today?
     Option 2: Industry/trend angle — what does this signal about where SE is heading?
       Not "the industry is moving toward..." (too vague). Aim for one of these frames:
@@ -31,6 +31,15 @@ DRAFTING RULES:
         - The thing everyone is excited about only works under conditions nobody has
         - We've had this capability before and it didn't help — here's why this time is the same
       The contrarian angle must be a specific, arguable position — not just a dose of scepticism.
+    Option 4: Balanced breakdown — a structured, reader-oriented summary post. This option
+      must follow this exact internal flow (each beat is 1–3 sentences, no headers needed):
+        1. Hook: one punchy opening line that earns the click
+        2. What: brief description of the article, finding, or development — just the facts
+        3. So what: the key takeaway or result — why it matters to this audience
+        4. But: a word of caution or a specific contrarian point — an honest complication
+        5. Close: a plain summary or single question that ties it together
+      This angle should read as the most balanced and informative of the four. It gives the
+      audience enough to form their own view, not just Photi's.
 - 100–175 words each
 - Include the source link naturally in the post or as a "Source:" line at the end
 - 2–3 hashtags, placed at the very end
@@ -45,6 +54,9 @@ OUTPUT FORMAT (repeat this block for every item):
 [post text]
 
 ### Option 3 — [angle label]
+[post text]
+
+### Option 4 — Balanced breakdown
 [post text]
 """
 

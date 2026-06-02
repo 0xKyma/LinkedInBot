@@ -3,7 +3,7 @@ LinkedIn Post Drafting Agent — MBSE/SysML track entry point.
 
 Agents:
   MBSEResearchAgent — web search + scoring for MBSE/SysML content
-  MBSEDraftingAgent — draft 3 angles per MBSE item
+  MBSEDraftingAgent — draft 4 angles per MBSE item
   QualityAgent      — review all drafts for voice compliance
   (revision loop)   — rewrite flagged posts, max 2 rounds
 
