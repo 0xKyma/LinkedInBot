@@ -18,6 +18,11 @@ for _d in (POSTS_DIR, RESEARCH_DIR, CRITIQUE_DIR):
     _d.mkdir(exist_ok=True)
 
 _URL_RE = re.compile(r"URL:\s*(https?://\S+)", re.IGNORECASE)
+_SOURCE_URL_RE = re.compile(r"Source:\s*(https?://\S+)", re.IGNORECASE)
+
+
+def _extract_draft_urls(text: str) -> set[str]:
+    return {m.group(1).rstrip(".,)\"'") for m in _SOURCE_URL_RE.finditer(text)}
 
 
 def _load_covered_sources() -> set[str]:
@@ -31,13 +36,12 @@ def _load_covered_sources() -> set[str]:
 
 
 def _seed_covered_sources() -> None:
-    """Populate covered_sources.txt from all existing research files on first use."""
+    """Populate covered_sources.txt from Source: lines in all existing post files."""
     all_urls: set[str] = set()
-    for f in sorted(RESEARCH_DIR.glob("*-research.md")):
-        text = f.read_text(encoding="utf-8")
-        all_urls.update(m.group(1).rstrip(".,)\"'") for m in _URL_RE.finditer(text))
+    for f in sorted(POSTS_DIR.glob("*-post.md")):
+        all_urls.update(_extract_draft_urls(f.read_text(encoding="utf-8")))
     with COVERED_SOURCES_FILE.open("w", encoding="utf-8") as fh:
-        fh.write("# All sources ever researched or drafted about — updated each run\n\n")
+        fh.write("# All sources ever drafted about — updated each run\n\n")
         for url in sorted(all_urls):
             fh.write(url + "\n")
 
@@ -49,9 +53,10 @@ def get_used_sources() -> set[str]:
     return _load_covered_sources()
 
 
-def _update_covered_sources(research_text: str) -> None:
-    """Append any new URLs from this run's research output to covered_sources.txt."""
-    new_urls = {m.group(1).rstrip(".,)\"'") for m in _URL_RE.finditer(research_text)}
+def _update_covered_sources(mbse_drafts: "DraftResult", world_drafts: "DraftResult") -> None:
+    """Append Source: URLs from this run's drafts to covered_sources.txt."""
+    draft_text = mbse_drafts.raw_text + "\n" + world_drafts.raw_text
+    new_urls = _extract_draft_urls(draft_text)
     if not new_urls:
         return
     existing = _load_covered_sources()
@@ -119,6 +124,6 @@ def write_post_file(
     research_path.write_text(research_content, encoding="utf-8")
     critique_path.write_text(critique_content, encoding="utf-8")
 
-    _update_covered_sources(mbse_evaluation + "\n" + world_evaluation)
+    _update_covered_sources(mbse_drafts, world_drafts)
 
     return posts_path, research_path, critique_path
