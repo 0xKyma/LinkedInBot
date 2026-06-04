@@ -33,3 +33,5 @@ https://www.rand.org/pubs/research_briefs/RBA2333-1.html
 https://www.rand.org/pubs/research_reports/RRA2333-2.html
 https://www.sciencedirect.com/science/article/pii/S0166361525001150
 https://www.sodiuswillert.com/en/blog/sysml-v1-vs-sysml-v2-what-changes-for-engineering-teams
+https://sdtimes.com/softwaredev/omg-launches-official-sysmlv2-certification-program-to-accelerate-next-generation-mbse/
+https://www.omg.org/certification/sysml2/
