@@ -112,6 +112,9 @@ Search queries to run (run all of them):
 - site:ieeexplore.ieee.org "systems engineering" OR "model-based" after:{cutoff}
 - INCOSE symposium 2025 OR 2026 "systems engineering" paper OR proceedings
 - "technical report" MBSE OR "systems engineering" site:nasa.gov OR site:mitre.org OR site:rand.org
+- site:omg.org SysML OR KerML OR "systems modeling" after:{cutoff}
+- "release notes" OR "new release" OR "version" Capella OR SysON OR Cameo OR Rhapsody 2026
+- MBSE OR "systems engineering" "lessons learned" OR "failure" OR "post-mortem" programme OR program 2025 OR 2026
 
 For the last four publication-focused queries, cast a wider date net: accept
 content up to 90 days old if it is genuinely novel to Photi's audience (i.e., the
@@ -154,6 +157,8 @@ DOMAINS TO SEARCH:
   infrastructure integration challenges, supply chain disruptions
 - Geopolitical: decisions or events that expose large-scale system design trade-offs,
   alliance system dynamics, sanctions as feedback mechanisms
+- Space and autonomous systems: launch failures, on-orbit anomalies, autonomous vehicle
+  incidents, unmanned system integration failures, programme cancellations
 
 EXCLUDE:
 - Pure political commentary with no system-level insight
@@ -229,6 +234,8 @@ Search queries to run (run all of them):
 - "systems engineering" defence OR defense OR energy OR geopolitical after:{cutoff_14d}
 - site:breakingdefense.com OR site:defensenews.com after:{cutoff_14d}
 - site:iea.org OR site:energy.gov major OR failure OR policy after:{cutoff_14d}
+- space OR aerospace "launch failure" OR "mission anomaly" OR "programme review" OR "program cancellation" after:{cutoff_14d}
+- autonomous OR "self-driving" OR unmanned incident OR accident OR investigation OR failure after:{cutoff_14d}
 
 Focus on events where the systems thinking angle is non-obvious — not just
 "big thing happened" but "here is what this reveals about how the system works

@@ -58,6 +58,14 @@ SOFT WARNINGS (flag but do not fail):
   hook makes a claim a reader can agree or disagree with before reading on.
 - Ends with more than one of: question, statement, call to action
 - Lists used where prose would serve better
+- Contrarian angle (Option 3) asserts without mechanism. Flag if the post names
+  what is wrong but not why — a claim ("the community is avoiding X", "this solves
+  the wrong problem") with no supporting reasoning or specific evidence for why the
+  mainstream position fails.
+- Balanced breakdown "But" beat is vague. Flag if the complication reads as a
+  generic caution ("this is complex", "more research is needed", "results may vary",
+  "it's worth watching") rather than naming a specific limitation of the source or
+  a specific qualifying condition.
 
 OUTPUT FORMAT — for each post section found (e.g. "## Topic / ### Option 1"):
 

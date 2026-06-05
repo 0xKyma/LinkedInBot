@@ -30,19 +30,30 @@ DRAFTING RULES:
         - The community is avoiding the real conversation here
         - The thing everyone is excited about only works under conditions nobody has
         - We've had this capability before and it didn't help — here's why this time is the same
-      The contrarian angle must be a specific, arguable position — not just a dose of scepticism.
+      The contrarian angle must explain the mechanism — why the mainstream position fails,
+      not just assert that it does. Name the specific assumption being challenged and the
+      specific evidence or logical gap that undermines it. A claim without a mechanism
+      is a headline, not a contrarian post.
     Option 4: Balanced breakdown — a structured, reader-oriented summary post. This option
       must follow this exact internal flow (each beat is 1–3 sentences, no headers needed):
         1. Hook: one punchy opening line that earns the click
         2. What: brief description of the article, finding, or development — just the facts
         3. So what: the key takeaway or result — why it matters to this audience
-        4. But: a word of caution or a specific contrarian point — an honest complication
+        4. But: a specific honest complication — one of: a limitation of the source itself
+           (vendor framing, sample size, single-domain study), a condition under which the
+           finding doesn't hold, or a counter-argument from practice. "This is complex" is
+           not a complication. Name what specifically qualifies or undercuts the So What.
         5. Close: a plain summary or single question that ties it together
       This angle should read as the most balanced and informative of the four. It gives the
       audience enough to form their own view, not just Photi's.
 - 100–175 words each
 - Include the source link naturally in the post or as a "Source:" line at the end
 - 2–3 hashtags, placed at the very end
+- Where the source contains specific numerical findings (percentages, counts, study sizes,
+  timeframes, cost figures), include at least one concrete number in each post. Vague
+  paraphrases of quantitative findings ("the study showed improvement") are weaker than
+  the specific claim ("five of seven case studies showed X"). If the source has no specific
+  numbers, use a specific timeframe, version number, or named capability instead.
 
 OUTPUT FORMAT (repeat this block for every item):
 ## [Item title or short topic label]
@@ -84,6 +95,11 @@ SPECIAL RULES FOR WORLD EVENTS POSTS:
   verification gap, etc.).
 - Option 2 must use a broader systems thinking frame (feedback loops, unintended
   consequences, emergence, complexity).
+- Option 3 must use a programme/acquisition management frame: how does this event
+  expose a failure mode in how large programmes are scoped, resourced, contracted,
+  or governed? Frames: requirements volatility not caught at gate reviews, interface
+  ownership gaps between primes and subs, verification deferred to late integration,
+  schedule pressure overriding design margin.
 - 100–175 words each.
 - Include source link naturally or as "Source:" at the end.
 - 2–3 hashtags; at least one of #SystemsEngineering or #SystemsThinking.
@@ -93,6 +109,9 @@ OUTPUT FORMAT:
 [post text]
 
 ### World Event Option 2 — [systems thinking frame]
+[post text]
+
+### World Event Option 3 — [programme/acquisition frame]
 [post text]
 """
 
