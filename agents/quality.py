@@ -1,12 +1,78 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from anthropic import AsyncAnthropic
 
 from prompts.quality import QUALITY_SYSTEM_PROMPT
 from .base import BaseAgent
 from .drafting import DraftResult
+
+QUALITY_REVIEW_TOOL: dict = {
+    "name": "submit_quality_review",
+    "description": "Submit the structured quality review for all draft posts.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "reviews": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "post_id": {
+                            "type": "string",
+                            "description": (
+                                "The post section header, "
+                                "e.g. 'C1 Option 1 — Practitioner' or "
+                                "'World Event Option 1 — SE methodology frame'."
+                            ),
+                        },
+                        "status": {"type": "string", "enum": ["PASS", "FAIL"]},
+                        "word_count": {"type": "integer"},
+                        "issues": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": (
+                                "Specific rule violations, quoted where possible. "
+                                "Empty list if status is PASS."
+                            ),
+                        },
+                    },
+                    "required": ["post_id", "status", "word_count", "issues"],
+                },
+            }
+        },
+        "required": ["reviews"],
+    },
+}
+
+
+def _is_world_event(post_id: str) -> bool:
+    return "world event" in post_id.lower()
+
+
+def _format_review_text(reviews: list[dict]) -> str:
+    lines = []
+    for r in reviews:
+        lines.append(f"POST: {r['post_id']}")
+        lines.append(f"STATUS: {r['status']}")
+        lines.append(f"WORD COUNT: {r['word_count']}")
+        lines.append("ISSUES:")
+        if r["issues"]:
+            for issue in r["issues"]:
+                lines.append(f"- {issue}")
+        else:
+            lines.append("- None")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _format_failed_notes(failed: list[dict]) -> str:
+    parts = []
+    for r in failed:
+        issues_str = "\n".join(f"- {i}" for i in r["issues"])
+        parts.append(f"{r['post_id']}\n{issues_str}")
+    return "\n\n".join(parts)
 
 
 @dataclass
@@ -16,65 +82,6 @@ class ReviewResult:
     failed_notes: str = ""
     mbse_failed_notes: str = ""
     world_failed_notes: str = ""
-
-
-def _normalize(line: str) -> str:
-    """Strip markdown bold markers so **POST:** and POST: both match."""
-    return line.strip().replace("**", "")
-
-
-def _detect_failures(review_text: str) -> tuple[bool, str, str, str]:
-    """Parse review output to find FAIL entries and extract their notes.
-
-    Returns (has_failures, all_failed_notes, mbse_failed_notes, world_failed_notes).
-    Track membership is determined by "## Track 1" / "## Track 2" headers that
-    the quality agent receives from the combined input.
-    """
-    lines = review_text.splitlines()
-    mbse_sections: list[str] = []
-    world_sections: list[str] = []
-    current_post = ""
-    current_track = "mbse"
-    in_failed_post = False
-    collecting_issues = False
-    issue_lines: list[str] = []
-
-    for line in lines:
-        stripped = _normalize(line)
-        lower = stripped.lower()
-        if lower.startswith("## track 1") or lower.startswith("# track 1"):
-            current_track = "mbse"
-        elif lower.startswith("## track 2") or lower.startswith("# track 2"):
-            current_track = "world"
-        elif stripped.startswith("POST:"):
-            if in_failed_post and issue_lines:
-                entry = f"{current_post}\n" + "\n".join(issue_lines)
-                (mbse_sections if current_track == "mbse" else world_sections).append(entry)
-            current_post = stripped[len("POST:"):].strip()
-            in_failed_post = False
-            collecting_issues = False
-            issue_lines = []
-        elif stripped.startswith("STATUS:"):
-            status = stripped[len("STATUS:"):].strip().upper()
-            in_failed_post = status == "FAIL"
-        elif stripped.startswith("ISSUES:") and in_failed_post:
-            collecting_issues = True
-        elif collecting_issues and in_failed_post and stripped.startswith("-"):
-            if stripped != "- None":
-                issue_lines.append(stripped)
-
-    if in_failed_post and issue_lines:
-        entry = f"{current_post}\n" + "\n".join(issue_lines)
-        (mbse_sections if current_track == "mbse" else world_sections).append(entry)
-
-    all_sections = mbse_sections + world_sections
-    has_failures = bool(all_sections)
-    return (
-        has_failures,
-        "\n\n".join(all_sections),
-        "\n\n".join(mbse_sections),
-        "\n\n".join(world_sections),
-    )
 
 
 class QualityAgent(BaseAgent):
@@ -92,15 +99,22 @@ class QualityAgent(BaseAgent):
             return ReviewResult(raw_text="No drafts to review.", has_failures=False)
 
         user_prompt = (
-            "Review all of the following LinkedIn post drafts against the checklist:\n\n"
-            + combined
+            "Review every post in the following drafts against the checklist "
+            "and call submit_quality_review with a result for each one:\n\n" + combined
         )
-        raw = await self._call(user_prompt, max_tokens=2048)
-        has_failures, failed_notes, mbse_notes, world_notes = _detect_failures(raw)
+        structured = await self._call_with_forced_tool(
+            user_prompt, QUALITY_REVIEW_TOOL, max_tokens=2048
+        )
+        reviews = structured["reviews"]
+
+        failed = [r for r in reviews if r["status"] == "FAIL"]
+        mbse_failed = [r for r in failed if not _is_world_event(r["post_id"])]
+        world_failed = [r for r in failed if _is_world_event(r["post_id"])]
+
         return ReviewResult(
-            raw_text=raw,
-            has_failures=has_failures,
-            failed_notes=failed_notes,
-            mbse_failed_notes=mbse_notes,
-            world_failed_notes=world_notes,
+            raw_text=_format_review_text(reviews),
+            has_failures=bool(failed),
+            failed_notes=_format_failed_notes(failed),
+            mbse_failed_notes=_format_failed_notes(mbse_failed),
+            world_failed_notes=_format_failed_notes(world_failed),
         )

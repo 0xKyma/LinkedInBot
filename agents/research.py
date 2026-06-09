@@ -13,39 +13,85 @@ from prompts.research import (
 )
 from .base import BaseAgent, WEB_SEARCH_TOOL
 
-# Phrases that only appear in the agent's explicit "nothing qualified" statement,
-# not inside candidate descriptions. Checked only against the selection-summary
-# section to avoid false negatives from matching quotes within candidate text.
-_NO_CANDIDATES_SIGNALS = (
-    "cannot find",
-    "no strong candidates",
-    "no candidates met",
-    "no qualifying candidates",
-    "did not meet the bar",
-    "did not meet the threshold",
-    "no items met",
+_EXTRACTION_SYSTEM = (
+    "You are a precise data extractor. "
+    "Given research output text, call the provided tool with the exact structured result. "
+    "Do not add commentary."
 )
 
-_NO_WORLD_EVENT_SIGNALS = (
-    "no item met",
-    "no item scored",
-    "no strong candidates",
-    "no qualifying event",
-    "no event scored",
-    "no event met",
-)
+MBSE_RESEARCH_RESULT_TOOL: dict = {
+    "name": "submit_research_result",
+    "description": "Submit the structured MBSE research result.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "has_candidates": {
+                "type": "boolean",
+                "description": (
+                    "True if at least one item met the scoring threshold "
+                    "and was selected for drafting."
+                ),
+            },
+            "selected_items": {
+                "type": "array",
+                "description": "Items selected for drafting. Empty array if has_candidates is false.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "url": {"type": "string"},
+                        "total_score": {"type": "integer"},
+                    },
+                    "required": ["title", "url", "total_score"],
+                },
+            },
+            "explanation": {
+                "type": "string",
+                "description": (
+                    "One sentence on the selection decision, or why no candidates qualified."
+                ),
+            },
+        },
+        "required": ["has_candidates", "selected_items", "explanation"],
+    },
+}
 
-# Section headers that introduce the agent's final selection summary.
-# Checking only this section avoids false negatives from signal phrases
-# appearing inside candidate descriptions earlier in the response.
-_MBSE_SELECTION_HEADER = "## selected for drafting"
-_WORLD_SELECTION_HEADER = "## selected world event for drafting"
-
-
-def _selection_section(raw: str, header: str) -> str:
-    """Return the text from the final selection header onwards, or full text if not found."""
-    idx = raw.lower().rfind(header)
-    return raw[idx:] if idx != -1 else raw
+WORLD_EVENTS_RESULT_TOOL: dict = {
+    "name": "submit_world_events_result",
+    "description": "Submit the structured world events research result.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "has_candidates": {
+                "type": "boolean",
+                "description": (
+                    "True if an event met the scoring threshold and was selected for drafting."
+                ),
+            },
+            "selected_event": {
+                "type": "object",
+                "description": "The selected event. Omit entirely if has_candidates is false.",
+                "properties": {
+                    "title": {"type": "string"},
+                    "url": {"type": "string"},
+                    "total_score": {"type": "integer"},
+                    "se_angle": {
+                        "type": "string",
+                        "description": "The systems engineering or systems thinking angle identified.",
+                    },
+                },
+                "required": ["title", "url", "total_score", "se_angle"],
+            },
+            "explanation": {
+                "type": "string",
+                "description": (
+                    "One sentence on the selection decision, or why no event qualified."
+                ),
+            },
+        },
+        "required": ["has_candidates", "explanation"],
+    },
+}
 
 
 @dataclass
@@ -74,9 +120,16 @@ class MBSEResearchAgent(BaseAgent):
             exclude_sources=_format_exclude(skip_urls),
         )
         raw = await self._call(user_prompt)
-        check = _selection_section(raw, _MBSE_SELECTION_HEADER).lower()
-        has_candidates = not any(sig in check for sig in _NO_CANDIDATES_SIGNALS)
-        return ResearchResult(track="mbse", raw_text=raw, has_candidates=has_candidates)
+        structured = await self._call_with_forced_tool(
+            f"Extract the selection result from this MBSE research output:\n\n{raw}",
+            MBSE_RESEARCH_RESULT_TOOL,
+            system=_EXTRACTION_SYSTEM,
+        )
+        return ResearchResult(
+            track="mbse",
+            raw_text=raw,
+            has_candidates=structured["has_candidates"],
+        )
 
 
 class WorldEventsResearchAgent(BaseAgent):
@@ -91,6 +144,13 @@ class WorldEventsResearchAgent(BaseAgent):
             exclude_sources=_format_exclude(skip_urls),
         )
         raw = await self._call(user_prompt)
-        check = _selection_section(raw, _WORLD_SELECTION_HEADER).lower()
-        has_candidates = not any(sig in check for sig in _NO_WORLD_EVENT_SIGNALS)
-        return ResearchResult(track="world_events", raw_text=raw, has_candidates=has_candidates)
+        structured = await self._call_with_forced_tool(
+            f"Extract the selection result from this world events research output:\n\n{raw}",
+            WORLD_EVENTS_RESULT_TOOL,
+            system=_EXTRACTION_SYSTEM,
+        )
+        return ResearchResult(
+            track="world_events",
+            raw_text=raw,
+            has_candidates=structured["has_candidates"],
+        )

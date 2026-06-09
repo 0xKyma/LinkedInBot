@@ -59,14 +59,13 @@ SOFT WARNINGS (flag but do not fail):
 - Ends with more than one of: question, statement, call to action
 - Lists used where prose would serve better
 
-OUTPUT FORMAT — for each post section found (e.g. "## Topic / ### Option 1"):
-
-POST: [section header, e.g. "C1 Option 1 — Practitioner"]
-STATUS: PASS or FAIL
-WORD COUNT: [number]
-ISSUES:
-- [specific issue, quoted where possible, e.g. 'em dash in "the gap — between"']
-- [or "None" if STATUS is PASS]
+RETURNING RESULTS — call submit_quality_review with an entry for every post section found:
+- post_id: the section header (e.g. "C1 Option 1 — Practitioner")
+- status: "PASS" or "FAIL"
+- word_count: the post's word count
+- issues: list of specific rule violations, quoted where possible
+  (e.g. ['em dash in "the gap — between"', 'passive voice: "was designed to"'])
+  Empty list if status is PASS.
 
 Process every post section in the drafts. Do not summarise or skip any.
 """
