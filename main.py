@@ -26,12 +26,11 @@ from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
-from anthropic import AsyncAnthropic
-
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+from agents.base import create_client
 from agents.research import MBSEResearchAgent
 from agents.drafting import MBSEDraftingAgent, DraftResult
 from agents.custom import CustomTopicAgent
@@ -53,7 +52,7 @@ async def run(
 ) -> int:
     today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
 
-    client = AsyncAnthropic()
+    client = create_client()
 
     mbse_researcher = MBSEResearchAgent(client)
     mbse_drafter = MBSEDraftingAgent(client)

@@ -18,10 +18,9 @@ from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
-from anthropic import AsyncAnthropic
-
 load_dotenv()
 
+from agents.base import create_client
 from agents.drafting import DraftResult, MBSEDraftingAgent
 from agents.manual import ManualDraftAgent
 from agents.quality import QualityAgent
@@ -95,7 +94,7 @@ async def main() -> int:
         print(f"  {k}. {v}")
     angle = ANGLES.get(_ask("\nEnter 1–5 (press Enter for Practitioner): ", "1"), "Practitioner")
 
-    client = AsyncAnthropic()
+    client = create_client()
     agent = ManualDraftAgent(client)
     quality = QualityAgent(client)
     reviser = MBSEDraftingAgent(client)

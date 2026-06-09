@@ -1,3 +1,19 @@
+"""
+Agent harness.
+
+``BaseAgent`` is the single execution path every agent shares: it owns the
+model/token configuration, the system-prompt caching, structured usage logging,
+and the two call shapes (free-text ``_call`` and forced-tool ``_call_with_forced_tool``).
+Agents stay thin — they compose a system prompt (from Agent Skills, see
+``skill_loader``) and call through this harness rather than touching the SDK
+directly.
+
+``create_client`` centralises client construction so every entry point gets the
+same retry policy. The Anthropic SDK already retries 429/5xx/connection errors
+with exponential backoff; we raise the ceiling so a transient web-search or
+rate-limit blip during the daily run self-heals instead of aborting the job.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -6,9 +22,21 @@ from anthropic import AsyncAnthropic
 
 MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 4096
+# A full daily run is a handful of calls; a transient failure shouldn't lose it.
+MAX_RETRIES = 4
 WEB_SEARCH_TOOL = {"type": "web_search_20250305", "name": "web_search"}
 
 log = logging.getLogger(__name__)
+
+
+def create_client() -> AsyncAnthropic:
+    """Construct the shared async client with the pipeline's retry policy.
+
+    Reads ANTHROPIC_API_KEY from the environment (SDK default). Use this from
+    every entry point instead of ``AsyncAnthropic()`` so retry behaviour is
+    consistent across the MBSE, world-events, and interactive paths.
+    """
+    return AsyncAnthropic(max_retries=MAX_RETRIES)
 
 
 class BaseAgent:

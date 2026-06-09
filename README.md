@@ -108,10 +108,32 @@ keep draft         WorldEventsDraftingAgent
 | `CustomTopicAgent` | `agents/custom.py` | Researches and drafts a user-supplied topic or URL |
 | `ManualDraftAgent` | `agents/manual.py` | On-demand drafting in interactive mode (`draft.py`) |
 
-All agents share a common `BaseAgent` (`agents/base.py`) that wraps
-`AsyncAnthropic`, handles system prompt caching, and logs token usage.
-The two research agents run the web search tool; drafting and quality agents
-do not (they work only from text already returned).
+All agents share a common `BaseAgent` harness (`agents/base.py`) that wraps
+`AsyncAnthropic`, handles system prompt caching, logs token usage, and provides
+the two call shapes (free-text and forced-tool/structured). Clients are built
+through `create_client()`, which sets a shared retry policy so a transient
+rate-limit or web-search blip during the daily run self-heals instead of
+aborting the job. The two research agents run the web search tool; drafting and
+quality agents do not (they work only from text already returned).
+
+### Agent Skills
+
+The reusable, model-facing context — the voice rules, the audience definition,
+and the two scoring rubrics — lives in `skills/` as [Agent
+Skills](https://platform.claude.com/docs/en/agents-and-tools/skills): folders
+containing a `SKILL.md` with YAML frontmatter (`name`, `description`) and a body.
+
+| Skill | Used by |
+|---|---|
+| `linkedin-voice` | drafting, quality, custom, manual prompts |
+| `linkedin-audience` | research + drafting prompts |
+| `mbse-scoring` | MBSE research prompt |
+| `world-events-scoring` | world-events research prompt |
+
+`skill_loader.py` parses and composes these into the system prompts the pipeline
+sends. Because they are plain `SKILL.md` folders, the same skills are portable —
+you can point Claude Code, claude.ai, or a Managed Agent at them and get the
+identical voice and scoring behaviour without copying prompt text around.
 
 ## How it works
 
@@ -277,9 +299,15 @@ LinkedInBot/
 │   ├── quality.py            # QualityAgent
 │   ├── custom.py             # CustomTopicAgent (used by --topic flag)
 │   └── manual.py             # ManualDraftAgent (used by draft.py)
+├── skills/                   # Agent Skills (SKILL.md folders) — single source of truth
+│   ├── linkedin-voice/       # voice + format rules
+│   ├── linkedin-audience/    # who the posts are for
+│   ├── mbse-scoring/         # MBSE 25-point rubric
+│   └── world-events-scoring/ # world-events 25-point rubric
+├── skill_loader.py           # loads + composes SKILL.md files (no YAML dependency)
 ├── prompts/
-│   ├── shared.py             # AUDIENCE, VOICE_EXAMPLES
-│   ├── research.py           # search system prompts + user prompt templates
+│   ├── shared.py             # AUDIENCE, VOICE_EXAMPLES (loaded from skills)
+│   ├── research.py           # search prompts (composed from skills) + user templates
 │   ├── drafting.py           # draft system prompts + revision prompt
 │   ├── quality.py            # quality checklist system prompt
 │   ├── custom.py             # custom topic research + draft prompts
@@ -307,7 +335,10 @@ LinkedInBot/
 
 ### Voice and style
 
-Edit `prompts/shared.py`. Key rules currently in place:
+Edit `skills/linkedin-voice/SKILL.md` (the voice rules) and
+`skills/linkedin-audience/SKILL.md` (the audience). `prompts/shared.py` loads
+these, so a single edit propagates to every drafting, quality, and manual prompt.
+Key rules currently in place:
 
 - Posts are 100-175 words
 - Structure: hook, context, opinion, ending (question or statement)
@@ -325,11 +356,12 @@ Edit `prompts/shared.py`. Key rules currently in place:
 
 The `QualityAgent` enforces these rules automatically and triggers a rewrite
 if a draft fails. After a few weeks of real runs you will see what it still
-gets wrong. Tighten the rules in `prompts/shared.py` and `prompts/quality.py`.
+gets wrong. Tighten the rules in `skills/linkedin-voice/SKILL.md` and
+`prompts/quality.py`.
 
-The highest-leverage improvement is adding real post examples to `VOICE_EXAMPLES`
-in `prompts/shared.py`. The model learns cadence and vocabulary from concrete
-instances far better than from descriptions alone.
+The highest-leverage improvement is adding real post examples to
+`skills/linkedin-voice/SKILL.md`. The model learns cadence and vocabulary from
+concrete instances far better than from descriptions alone.
 
 ### Source deduplication window
 
@@ -350,11 +382,13 @@ Edit `prompts/research.py` — `SEARCH_USER_PROMPT_TEMPLATE` for MBSE queries,
 
 ### Scoring and selection
 
-Edit the system prompts in `prompts/research.py` to adjust scoring rubrics,
-minimum score thresholds, or inclusion/exclusion rules. Each criterion has
-anchored 1 and 5 examples to keep scores consistent across runs — update
-these if the domain focus shifts. The minimum qualifying score is 15/25
-for both tracks.
+Edit the rubric skills — `skills/mbse-scoring/SKILL.md` and
+`skills/world-events-scoring/SKILL.md` — to adjust scoring criteria,
+topic priorities, or inclusion/exclusion rules. Each criterion has anchored
+1 and 5 examples to keep scores consistent across runs; update these if the
+domain focus shifts. The minimum qualifying score thresholds and the selection
+/ output format live in the prompt outros in `prompts/research.py`. The minimum
+qualifying score is 15/25 for both tracks.
 
 ### Run frequency
 
@@ -408,7 +442,7 @@ intentionally high. Lower the minimum score threshold in the world events
 system prompt in `prompts/research.py` if you want more candidates surfaced.
 
 **Posts sound too AI-generated**
-Add more of your own writing as examples to `VOICE_EXAMPLES` in `prompts/shared.py`,
+Add more of your own writing as examples to `skills/linkedin-voice/SKILL.md`,
 or add specific failing patterns to the checklist in `prompts/quality.py`. The
 most effective lever is showing it what you actually wrote, not telling it what
 tone to hit.

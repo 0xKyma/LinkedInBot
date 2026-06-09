@@ -24,12 +24,11 @@ from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
-from anthropic import AsyncAnthropic
-
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+from agents.base import create_client
 from agents.research import WorldEventsResearchAgent
 from agents.drafting import WorldEventsDraftingAgent, DraftResult
 from agents.quality import QualityAgent, ReviewResult
@@ -47,7 +46,7 @@ MAX_REVISION_ROUNDS = 2
 async def run() -> int:
     today = dt.datetime.now(ZoneInfo(TIMEZONE)).date()
 
-    client = AsyncAnthropic()
+    client = create_client()
 
     world_researcher = WorldEventsResearchAgent(client)
     world_drafter = WorldEventsDraftingAgent(client)
