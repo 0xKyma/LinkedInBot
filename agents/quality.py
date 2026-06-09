@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from anthropic import AsyncAnthropic
@@ -7,6 +8,14 @@ from anthropic import AsyncAnthropic
 from prompts.quality import QUALITY_SYSTEM_PROMPT
 from .base import BaseAgent
 from .drafting import DraftResult
+
+log = logging.getLogger(__name__)
+
+# A full day can produce ~14 drafts (3 MBSE items x 4 angles + 2 world events).
+# Each structured review entry (post_id, status, word_count, quoted issues) is
+# verbose, so the forced tool call needs generous output room — too small a cap
+# truncates the JSON mid-array and the result comes back without "reviews".
+QUALITY_REVIEW_MAX_TOKENS = 8192
 
 QUALITY_REVIEW_TOOL: dict = {
     "name": "submit_quality_review",
@@ -103,9 +112,18 @@ class QualityAgent(BaseAgent):
             "and call submit_quality_review with a result for each one:\n\n" + combined
         )
         structured = await self._call_with_forced_tool(
-            user_prompt, QUALITY_REVIEW_TOOL, max_tokens=2048
+            user_prompt, QUALITY_REVIEW_TOOL, max_tokens=QUALITY_REVIEW_MAX_TOKENS
         )
-        reviews = structured["reviews"]
+        reviews = structured.get("reviews", [])
+        if not reviews:
+            # Truncated or malformed extraction. Don't lose the whole run over a
+            # review-formatting issue — keep the drafts (they are reviewed by a
+            # human before posting) and record that the check was inconclusive.
+            log.warning("Quality review returned no parseable results; keeping drafts unreviewed.")
+            return ReviewResult(
+                raw_text="_Quality review was inconclusive; drafts kept as-is._",
+                has_failures=False,
+            )
 
         failed = [r for r in reviews if r["status"] == "FAIL"]
         mbse_failed = [r for r in failed if not _is_world_event(r["post_id"])]
