@@ -412,17 +412,31 @@ export TIMEZONE="Europe/London"
 Without this, the server's UTC clock is used, which may name the file one day
 behind if you run it after midnight local time.
 
-### Model
+### Model routing
 
-Change `MODEL` in `agents/base.py`. Currently `claude-sonnet-4-6`.
+Each step runs on the cheapest model that does it well, set by four constants
+in `agents/base.py`:
+
+| Step | Model | Why |
+|---|---|---|
+| Research + scoring | `claude-sonnet-4-6` | web search + 25-point rubric — balanced judgment, token-heavy |
+| Drafting + revision | `claude-opus-4-8` | the actual posts — strongest writing voice, worth the premium |
+| Quality review | `claude-haiku-4-5` | checklist/lexical enforcement, runs every revision round |
+| Structured extraction | `claude-haiku-4-5` | pulling fields out of already-generated text — trivial |
+
+Re-tune any of these in one line (`MODEL_RESEARCH`, `MODEL_DRAFTING`,
+`MODEL_QUALITY`, `MODEL_EXTRACTION`); the harness wires each agent to its model.
+The per-call usage log prints `model=...` so you can see which model ran each step.
 
 ## Cost
 
-Roughly AU$9-10 per month at one full run per day (both tracks), based on
-Sonnet pricing and approximately 6 API calls per run (4 core + up to 2 revision
-rounds if quality check fails).
+Roughly AU$9-12 per month at one full run per day (both tracks). Spend is
+concentrated on the step that matters most: drafting runs on Opus 4.8 (pricier
+per token, but small outputs), while quality review and extraction run on
+Haiku 4.5 (much cheaper), and research stays on Sonnet 4.6. Net cost is broadly
+similar to the previous all-Sonnet setup, with quality shifted toward the posts.
 
-Run only `main.py` (MBSE track) to keep costs closer to AU$4-5/month.
+Run only `main.py` (MBSE track) to keep costs closer to AU$5-6/month.
 
 GitHub Actions is free for public repos and has a generous free tier for
 private repos (2,000 minutes/month). A single run takes 1-3 minutes.

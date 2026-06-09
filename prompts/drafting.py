@@ -44,6 +44,9 @@ DRAFTING RULES:
 - Include the source link naturally in the post or as a "Source:" line at the end
 - 2–3 hashtags, placed at the very end
 
+Output only the posts in the exact format below. Do not include any preamble,
+reasoning, planning notes, or commentary outside the post blocks.
+
 OUTPUT FORMAT (repeat this block for every item):
 ## [Item title or short topic label]
 
@@ -87,6 +90,9 @@ SPECIAL RULES FOR WORLD EVENTS POSTS:
 - 100–175 words each.
 - Include source link naturally or as "Source:" at the end.
 - 2–3 hashtags; at least one of #SystemsEngineering or #SystemsThinking.
+
+Output only the posts in the exact format below. Do not include any preamble,
+reasoning, planning notes, or commentary outside the post blocks.
 
 OUTPUT FORMAT:
 ### World Event Option 1 — [SE methodology frame]

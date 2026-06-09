@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from anthropic import AsyncAnthropic
 
 from prompts.quality import QUALITY_SYSTEM_PROMPT
-from .base import BaseAgent
+from .base import BaseAgent, MODEL_QUALITY
 from .drafting import DraftResult
 
 log = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ class ReviewResult:
 
 class QualityAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
-        super().__init__(client, QUALITY_SYSTEM_PROMPT)
+        super().__init__(client, QUALITY_SYSTEM_PROMPT, model=MODEL_QUALITY)
 
     async def run(self, mbse_drafts: DraftResult, world_drafts: DraftResult) -> ReviewResult:
         combined = ""

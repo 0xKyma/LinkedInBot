@@ -11,7 +11,7 @@ from prompts.research import (
     WORLD_EVENTS_SEARCH_SYSTEM_PROMPT,
     WORLD_EVENTS_USER_PROMPT_TEMPLATE,
 )
-from .base import BaseAgent, WEB_SEARCH_TOOL
+from .base import BaseAgent, WEB_SEARCH_TOOL, MODEL_RESEARCH, MODEL_EXTRACTION
 
 _EXTRACTION_SYSTEM = (
     "You are a precise data extractor. "
@@ -110,7 +110,7 @@ def _format_exclude(skip_urls: set[str] | None) -> str:
 
 class MBSEResearchAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
-        super().__init__(client, SEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL])
+        super().__init__(client, SEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL], model=MODEL_RESEARCH)
 
     async def run(self, today: dt.date, skip_urls: set[str] | None = None) -> ResearchResult:
         cutoff = (today - dt.timedelta(days=10)).isoformat()
@@ -124,6 +124,7 @@ class MBSEResearchAgent(BaseAgent):
             f"Extract the selection result from this MBSE research output:\n\n{raw}",
             MBSE_RESEARCH_RESULT_TOOL,
             system=_EXTRACTION_SYSTEM,
+            model=MODEL_EXTRACTION,
         )
         return ResearchResult(
             track="mbse",
@@ -134,7 +135,7 @@ class MBSEResearchAgent(BaseAgent):
 
 class WorldEventsResearchAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
-        super().__init__(client, WORLD_EVENTS_SEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL])
+        super().__init__(client, WORLD_EVENTS_SEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL], model=MODEL_RESEARCH)
 
     async def run(self, today: dt.date, skip_urls: set[str] | None = None) -> ResearchResult:
         cutoff_14d = (today - dt.timedelta(days=14)).isoformat()
@@ -148,6 +149,7 @@ class WorldEventsResearchAgent(BaseAgent):
             f"Extract the selection result from this world events research output:\n\n{raw}",
             WORLD_EVENTS_RESULT_TOOL,
             system=_EXTRACTION_SYSTEM,
+            model=MODEL_EXTRACTION,
         )
         return ResearchResult(
             track="world_events",

@@ -9,7 +9,7 @@ from prompts.drafting import (
     WORLD_EVENTS_DRAFT_SYSTEM_PROMPT,
     DRAFT_REVISION_SYSTEM_PROMPT,
 )
-from .base import BaseAgent
+from .base import BaseAgent, MODEL_DRAFTING
 from .research import ResearchResult
 
 
@@ -22,7 +22,7 @@ class DraftResult:
 
 class MBSEDraftingAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
-        super().__init__(client, DRAFT_SYSTEM_PROMPT)
+        super().__init__(client, DRAFT_SYSTEM_PROMPT, model=MODEL_DRAFTING)
 
     async def run(self, research: ResearchResult) -> DraftResult:
         user_prompt = (
@@ -48,7 +48,7 @@ class MBSEDraftingAgent(BaseAgent):
 
 class WorldEventsDraftingAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
-        super().__init__(client, WORLD_EVENTS_DRAFT_SYSTEM_PROMPT)
+        super().__init__(client, WORLD_EVENTS_DRAFT_SYSTEM_PROMPT, model=MODEL_DRAFTING)
 
     async def run(self, research: ResearchResult) -> DraftResult:
         user_prompt = (

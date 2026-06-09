@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from anthropic import AsyncAnthropic
 
 from prompts.custom import CUSTOM_RESEARCH_SYSTEM_PROMPT, CUSTOM_DRAFT_SYSTEM_PROMPT
-from .base import BaseAgent, WEB_SEARCH_TOOL
+from .base import BaseAgent, WEB_SEARCH_TOOL, MODEL_RESEARCH, MODEL_DRAFTING
 from .drafting import DraftResult
 
 ANGLE_LABELS = [
@@ -19,8 +19,8 @@ ANGLE_LABELS = [
 
 class CustomTopicAgent(BaseAgent):
     def __init__(self, client: AsyncAnthropic):
-        # Initialise with research prompt; draft call uses a separate system prompt
-        super().__init__(client, CUSTOM_RESEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL])
+        # Initialise for the research call; the draft call swaps system, tools, and model.
+        super().__init__(client, CUSTOM_RESEARCH_SYSTEM_PROMPT, tools=[WEB_SEARCH_TOOL], model=MODEL_RESEARCH)
 
     async def run(self, topic: str, n_angles: int = 3) -> DraftResult:
         # Step 1: research the topic
@@ -40,12 +40,14 @@ class CustomTopicAgent(BaseAgent):
             f"{angle_list}"
         )
 
-        # Override system prompt for the draft call
+        # Override system, tools, and model for the draft call (Opus for voice)
         original_system = self.system
         self.system = CUSTOM_DRAFT_SYSTEM_PROMPT
         self.tools = []
+        self.model = MODEL_DRAFTING
         raw = await self._call(draft_prompt)
         self.system = original_system
         self.tools = [WEB_SEARCH_TOOL]
+        self.model = MODEL_RESEARCH
 
         return DraftResult(track="custom", raw_text=raw, has_drafts=bool(raw))
