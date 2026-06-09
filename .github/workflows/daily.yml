@@ -1,0 +1,40 @@
+name: Daily LinkedIn Drafts
+
+on:
+  schedule:
+    - cron: '0 21 * * *'   # 07:30 ACST (Adelaide) — adjust via README
+  workflow_dispatch:
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TIMEZONE: Australia/Adelaide
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run MBSE/SysML track
+        run: python main.py
+
+      - name: Run world events track
+        run: python world_events.py
+
+      - name: Commit and push output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add posts/ research/ critique/ covered_sources.txt
+          git diff --cached --quiet || git commit -m "Daily LinkedIn drafts $(date -u +'%Y-%m-%d')"
+          git push
