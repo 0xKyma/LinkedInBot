@@ -36,3 +36,5 @@ https://www.sodiuswillert.com/en/blog/sysml-v1-vs-sysml-v2-what-changes-for-engi
 https://edmcouncil.org/announcement/omg-launches-official-sysmlv2-certification-program-to-accelerate-next-generation-mbse/
 https://www.ndiatennvalley.org/2026MBSE
 https://www.omg.org/certification/sysml2/
+https://finance.yahoo.com/sectors/technology/articles/omg-launches-official-sysml-v2-130300048.html
+https://incose.onlinelibrary.wiley.com/doi/10.1002/sys.70046
