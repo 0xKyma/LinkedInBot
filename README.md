@@ -271,10 +271,11 @@ python main.py --topic "https://..." --topic-angles 2
 Available angles, used in order: Practitioner, Industry/trend, Contrarian,
 SE lens, Systems thinking.
 
-## Run it daily via GitHub Actions
+## Run it via GitHub Actions
 
-The included workflow (`.github/workflows/daily.yml`) runs the agent on a schedule
-and commits the output files back to the repo.
+The included workflow (`.github/workflows/daily.yml`) runs the agent on demand
+and commits the output files back to the repo. It is not on a schedule —
+trigger it manually whenever you want fresh drafts.
 
 To enable:
 
@@ -283,7 +284,7 @@ To enable:
 3. Name: `ANTHROPIC_API_KEY`. Value: your key.
 4. Go to the **Actions** tab and enable workflows if prompted.
 
-You can trigger a manual run any time via **Actions > Daily LinkedIn Drafts > Run workflow**.
+Trigger a run via **Actions > Daily LinkedIn Drafts > Run workflow**.
 
 The committed files are your daily inbox. Open the repo on your phone, read the
 drafts in `posts/YYYY-MM-DD-post.md`, pick one, refine, post.
@@ -392,8 +393,9 @@ qualifying score is 15/25 for both tracks.
 
 ### Run frequency
 
-Change the cron line in `.github/workflows/daily.yml`. Format is
-`minute hour day month day-of-week` in UTC. Examples:
+The workflow is manual-only (`workflow_dispatch`). To re-enable a schedule,
+add a `schedule` trigger to `.github/workflows/daily.yml` with a cron line in
+`minute hour day month day-of-week` format (UTC). Examples:
 
 - `0 21 * * *` — every day at 21:00 UTC (07:30 Adelaide ACST)
 - `0 21 * * 1-5` — weekdays only
