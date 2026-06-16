@@ -1,8 +1,6 @@
 name: Daily LinkedIn Drafts
 
 on:
-  schedule:
-    - cron: '0 21 * * *'   # 07:30 ACST (Adelaide) — adjust via README
   workflow_dispatch:
 
 jobs:
