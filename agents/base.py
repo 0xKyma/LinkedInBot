@@ -28,7 +28,7 @@ MODEL_QUALITY = "claude-haiku-4-5"      # checklist enforcement: lexical pattern
 MODEL_EXTRACTION = "claude-haiku-4-5"   # pull structured fields out of already-generated text: trivial
 DEFAULT_MODEL = MODEL_RESEARCH
 
-MAX_TOKENS = 4096
+MAX_TOKENS = 16384
 # A full daily run is a handful of calls; a transient failure shouldn't lose it.
 MAX_RETRIES = 4
 WEB_SEARCH_TOOL = {"type": "web_search_20250305", "name": "web_search"}
