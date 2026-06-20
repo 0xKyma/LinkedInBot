@@ -40,3 +40,5 @@ https://finance.yahoo.com/sectors/technology/articles/omg-launches-official-sysm
 https://incose.onlinelibrary.wiley.com/doi/10.1002/sys.70046
 https://shoalgroup.com/news/shoal-advances-systems-engineering-practice-with-multiple-contributions-at-incose-is-2026/
 https://www.incose.org/event/2026-international-symposium/
+https://arxiv.org/abs/2606.06727
+https://blog.obeosoft.com/obeosoft_en
