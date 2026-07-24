@@ -271,19 +271,32 @@ python main.py --topic "https://..." --topic-angles 2
 Available angles, used in order: Practitioner, Industry/trend, Contrarian,
 SE lens, Systems thinking.
 
-## Run it daily via GitHub Actions
+## Run it on demand via GitHub Actions
 
-The included workflow (`.github/workflows/daily.yml`) runs the agent on a schedule
-and commits the output files back to the repo.
+The included workflow (`.github/workflows/daily.yml`) lets you run any track from
+the GitHub UI and commits the output files back to the repo.
 
 To enable:
 
 1. Push the repo to GitHub.
 2. Go to **Settings > Secrets and variables > Actions > New repository secret**.
-3. Name: `ANTHROPIC_API_KEY`. Value: your key.
+3. Name: `ANTHROPIC_API_KEY`. Value: your key. (This is the only place the key
+   lives for CI — never commit it. Locally it comes from your `.env` file.)
 4. Go to the **Actions** tab and enable workflows if prompted.
 
-You can trigger a manual run any time via **Actions > Daily LinkedIn Drafts > Run workflow**.
+To run: **Actions > LinkedIn Drafts > Run workflow**. The dialog asks **what to
+run**:
+
+| Choice | Runs | Output |
+|--------|------|--------|
+| `sysml` | `main.py` — MBSE/SysML track | `posts/`, `research/`, `critique/` |
+| `world_events` | `world_events.py` — defence/energy/geopolitics | `posts/`, `research/`, `critique/` |
+| `both` | sysml + world events | `posts/`, `research/`, `critique/` |
+| `manual` | `draft.py` — one post from a topic you supply | `manual/` |
+
+For **manual**, fill in the extra fields: `manual_topic` (a URL, dot points, or a
+topic), `manual_mode` (`url`, `info`, or `search`), and `manual_angle`. The other
+tracks ignore those fields.
 
 The committed files are your daily inbox. Open the repo on your phone, read the
 drafts in `posts/YYYY-MM-DD-post.md`, pick one, refine, post.

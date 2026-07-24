@@ -1,7 +1,42 @@
-name: Daily LinkedIn Drafts
+name: LinkedIn Drafts
 
 on:
   workflow_dispatch:
+    inputs:
+      run:
+        description: 'What to run'
+        type: choice
+        required: true
+        default: sysml
+        options:
+          - sysml          # MBSE/SysML AI track (main.py)
+          - world_events   # defence/energy/geopolitics track (world_events.py)
+          - both           # sysml + world_events (the old daily behaviour)
+          - manual         # draft one post from a topic you provide below
+      manual_topic:
+        description: 'Manual only — a URL, some dot points, or a topic to draft about'
+        required: false
+        type: string
+      manual_mode:
+        description: 'Manual only — how to treat the topic above'
+        type: choice
+        required: false
+        default: url
+        options:
+          - url            # research the link and draft
+          - info           # draft directly from your dot points (no search)
+          - search         # search the topic and draft
+      manual_angle:
+        description: 'Manual only — post angle'
+        type: choice
+        required: false
+        default: Practitioner
+        options:
+          - Practitioner
+          - Contrarian
+          - Industry/trend
+          - SE lens
+          - Systems thinking
 
 jobs:
   draft:
@@ -24,15 +59,37 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run MBSE/SysML track
+        if: ${{ inputs.run == 'sysml' || inputs.run == 'both' }}
         run: python main.py
 
       - name: Run world events track
+        if: ${{ inputs.run == 'world_events' || inputs.run == 'both' }}
         run: python world_events.py
 
+      - name: Validate manual input
+        if: ${{ inputs.run == 'manual' && inputs.manual_topic == '' }}
+        run: |
+          echo "::error::Manual run selected but 'manual_topic' is empty. Re-run and fill in the topic."
+          exit 1
+
+      - name: Run manual draft
+        if: ${{ inputs.run == 'manual' && inputs.manual_topic != '' }}
+        env:
+          MANUAL_MODE: ${{ inputs.manual_mode }}
+          MANUAL_ANGLE: ${{ inputs.manual_angle }}
+          MANUAL_TOPIC: ${{ inputs.manual_topic }}
+        run: |
+          python draft.py \
+            --mode "$MANUAL_MODE" \
+            --angle "$MANUAL_ANGLE" \
+            --topic "$MANUAL_TOPIC"
+
       - name: Commit and push output
+        env:
+          RUN_KIND: ${{ inputs.run }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add posts/ research/ critique/ covered_sources.txt
-          git diff --cached --quiet || git commit -m "Daily LinkedIn drafts $(date -u +'%Y-%m-%d')"
+          git add posts/ research/ critique/ manual/ covered_sources.txt
+          git diff --cached --quiet || git commit -m "LinkedIn drafts ($RUN_KIND) $(date -u +'%Y-%m-%d')"
           git push
