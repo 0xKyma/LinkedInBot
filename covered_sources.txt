@@ -48,3 +48,5 @@ https://breakingdefense.com/2026/06/air-force-cca-drone-wingman-anduril-general-
 https://www.airforce-technology.com/news/usaf-cca-contracts-software/
 https://arxiv.org/abs/2607.10347
 https://incose.onlinelibrary.wiley.com/doi/10.1002/sys.70030
+https://arxiv.org/html/2606.23395
+https://doi.org/10.3390/ai7080274
