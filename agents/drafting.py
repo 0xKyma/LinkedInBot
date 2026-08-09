@@ -42,7 +42,7 @@ class MBSEDraftingAgent(BaseAgent):
             + "\n\nRevise the flagged posts to fix the listed issues. "
             "Return the full set of posts in the same format, with revisions applied."
         )
-        raw = await self._call(user_prompt, max_tokens=2048)
+        raw = await self._call(user_prompt)
         return DraftResult(track="mbse", raw_text=raw, has_drafts=bool(raw))
 
 
@@ -68,5 +68,5 @@ class WorldEventsDraftingAgent(BaseAgent):
             + "\n\nRevise the flagged posts to fix the listed issues. "
             "Return the full set of posts in the same format, with revisions applied."
         )
-        raw = await self._call(user_prompt, max_tokens=2048)
+        raw = await self._call(user_prompt)
         return DraftResult(track="world_events", raw_text=raw, has_drafts=bool(raw))
