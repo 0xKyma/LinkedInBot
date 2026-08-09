@@ -28,7 +28,7 @@ MODEL_QUALITY = "claude-haiku-4-5"      # checklist enforcement: lexical pattern
 MODEL_EXTRACTION = "claude-haiku-4-5"   # pull structured fields out of already-generated text: trivial
 DEFAULT_MODEL = MODEL_RESEARCH
 
-MAX_TOKENS = 4096
+MAX_TOKENS = 8192
 # A full daily run is a handful of calls; a transient failure shouldn't lose it.
 MAX_RETRIES = 4
 WEB_SEARCH_TOOL = {"type": "web_search_20250305", "name": "web_search"}
@@ -85,6 +85,20 @@ class BaseAgent:
             kwargs["tools"] = self.tools
         msg = await self.client.messages.create(**kwargs)
         self._log_usage(msg, self.model)
+        if msg.stop_reason == "max_tokens":
+            retry_tokens = max_tokens * 2
+            log.warning(
+                "response truncated at max_tokens=%d (agent=%s) — retrying with max_tokens=%d",
+                max_tokens, type(self).__name__, retry_tokens,
+            )
+            kwargs["max_tokens"] = retry_tokens
+            msg = await self.client.messages.create(**kwargs)
+            self._log_usage(msg, self.model, label="retry_after_truncation")
+            if msg.stop_reason == "max_tokens":
+                log.error(
+                    "response still truncated after retry at max_tokens=%d (agent=%s)",
+                    retry_tokens, type(self).__name__,
+                )
         return self._extract_text(msg)
 
     async def _call_with_forced_tool(
@@ -105,7 +119,7 @@ class BaseAgent:
         """
         effective_system = system if system is not None else self.system
         effective_model = model or self.model
-        msg = await self.client.messages.create(
+        kwargs: dict = dict(
             model=effective_model,
             max_tokens=max_tokens,
             system=[{"type": "text", "text": effective_system, "cache_control": {"type": "ephemeral"}}],
@@ -113,7 +127,22 @@ class BaseAgent:
             tools=[tool],
             tool_choice={"type": "tool", "name": tool["name"]},
         )
+        msg = await self.client.messages.create(**kwargs)
         self._log_usage(msg, effective_model, label="extract")
+        if msg.stop_reason == "max_tokens":
+            retry_tokens = max_tokens * 2
+            log.warning(
+                "forced-tool response truncated at max_tokens=%d (agent=%s, tool=%s) — retrying with max_tokens=%d",
+                max_tokens, type(self).__name__, tool["name"], retry_tokens,
+            )
+            kwargs["max_tokens"] = retry_tokens
+            msg = await self.client.messages.create(**kwargs)
+            self._log_usage(msg, effective_model, label="extract_retry_after_truncation")
+            if msg.stop_reason == "max_tokens":
+                log.error(
+                    "forced-tool response still truncated after retry at max_tokens=%d (agent=%s, tool=%s)",
+                    retry_tokens, type(self).__name__, tool["name"],
+                )
         for block in msg.content:
             if getattr(block, "type", None) == "tool_use" and block.name == tool["name"]:
                 return block.input
