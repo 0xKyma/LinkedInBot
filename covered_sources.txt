@@ -52,3 +52,4 @@ https://arxiv.org/html/2606.23395
 https://doi.org/10.3390/ai7080274
 https://arxiv.org/abs/2508.16181
 https://www.incose.org/events-education/event-calendar/
+https://sysml.org/sysml-v2/reviews/good-bad-ugly/
