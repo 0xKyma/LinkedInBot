@@ -59,3 +59,5 @@ https://www.cto.mil/wp-content/uploads/2026/02/SysML-Info-Sheet-Feb2026.pdf
 https://arxiv.org/abs/2509.15461
 https://arxiv.org/abs/2608.09547
 https://doi.org/10.3390/systems14050482
+https://arxiv.org/abs/2606.29006
+https://arxiv.org/abs/2609.16252
